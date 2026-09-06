@@ -48,6 +48,16 @@
     </style>
 </head>
 <body>
+    <div id="lockScreen" style="position:fixed; top:0; left:0; right:0; bottom:0; background:#0f172a; z-index:999; display:flex; align-items:center; justify-content:center;">
+        <div style="background:#1e293b; padding:30px; border-radius:12px; width:280px; text-align:center;">
+            <h2 style="margin-bottom:20px;">🔒 Admin Access</h2>
+            <input type="password" id="adminPassword" placeholder="Enter password" style="width:100%; padding:12px; border-radius:8px; border:none; margin-bottom:12px; box-sizing:border-box;">
+            <button onclick="checkAdminPassword()" style="width:100%; padding:12px; background:#22c55e; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Unlock</button>
+            <div id="lockError" style="color:#ef4444; margin-top:10px; font-size:13px;"></div>
+        </div>
+    </div>
+
+    <div id="adminContent" style="display:none;">
     <h2>🔧 Admin Panel - EarnWave India</h2>
 
     <div class="tabs">
@@ -148,6 +158,8 @@
 
         <button class="full-btn" onclick="saveSettings()">💾 Save All Settings</button>
         <div id="settingsMessage" style="margin-top:10px; text-align:center; font-weight:bold;"></div>
+    </div>
+
     </div>
 
     <script>
@@ -261,6 +273,9 @@
         // ===== VIP REQUESTS =====
         async function loadVipRequests() {
             let { data: all } = await sb.from('vip_requests').select('*').order('requested_at', { ascending: false });
+            let { data: profiles } = await sb.from('user_profiles').select('*');
+            const profileMap = {};
+            (profiles || []).forEach(p => profileMap[p.user_id] = p.name);
 
             const pending = (all || []).filter(v => v.status === 'pending');
             const processed = (all || []).filter(v => v.status !== 'pending');
@@ -269,8 +284,11 @@
             if (pending.length === 0) {
                 pendingContainer.innerHTML = '<div class="empty-text">No pending VIP requests.</div>';
             } else {
-                pendingContainer.innerHTML = pending.map(v => `
+                pendingContainer.innerHTML = pending.map(v => {
+                    const userName = profileMap[v.user_id] || 'No name set';
+                    return `
                     <div class="item-card">
+                        <div class="item-row"><span class="item-label">User Name</span><span class="item-value">${userName}</span></div>
                         <div class="item-row"><span class="item-label">User ID</span><span class="item-value">${v.user_id.substring(0,8)}</span></div>
                         <div class="item-row"><span class="item-label">Plan</span><span class="item-value">${v.plan_selected}</span></div>
                         <div class="item-row"><span class="item-label">UTR Number</span><span class="item-value">${v.utr_number}</span></div>
@@ -280,7 +298,7 @@
                             <button class="reject-btn" onclick="rejectVip(${v.id})">✗ Reject</button>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             }
 
             const processedContainer = document.getElementById('processedVip');
@@ -328,6 +346,9 @@
         // ===== REDEEM PAYMENTS =====
         async function loadRedeemRequests() {
             let { data: all } = await sb.from('redeem_requests').select('*').order('requested_at', { ascending: false });
+            let { data: profiles } = await sb.from('user_profiles').select('*');
+            const profileMap = {};
+            (profiles || []).forEach(p => profileMap[p.user_id] = p.name);
 
             const pending = (all || []).filter(r => r.status === 'pending');
             const completed = (all || []).filter(r => r.status === 'completed');
@@ -341,8 +362,10 @@
             } else {
                 pendingContainer.innerHTML = pending.map(r => {
                     const profit = (r.paid_amount * 0.08).toFixed(1);
+                    const userName = profileMap[r.user_id] || 'No name set';
                     return `
                     <div class="item-card">
+                        <div class="item-row"><span class="item-label">User Name</span><span class="item-value">${userName}</span></div>
                         <div class="item-row"><span class="item-label">User ID</span><span class="item-value">${r.user_id.substring(0,8)}</span></div>
                         <div class="item-row"><span class="item-label">Code Value</span><span class="item-value">₹${r.original_amount}</span></div>
                         <div class="item-row"><span class="item-label">Amount Paid</span><span class="item-value">₹${r.paid_amount}</span></div>
@@ -481,7 +504,25 @@
             }
         }
 
-        loadVideoList();
+        const ADMIN_PASSWORD = "yashraj";
+
+        function checkAdminPassword() {
+            const entered = document.getElementById('adminPassword').value;
+            if (entered === ADMIN_PASSWORD) {
+                document.getElementById('lockScreen').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                sessionStorage.setItem('adminUnlocked', 'true');
+                loadVideoList();
+            } else {
+                document.getElementById('lockError').innerText = 'Incorrect password';
+            }
+        }
+
+        if (sessionStorage.getItem('adminUnlocked') === 'true') {
+            document.getElementById('lockScreen').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+            loadVideoList();
+        }
     </script>
 </body>
 </html>

@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EarnWave India - Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0B0E1A;
+    color: #F8FAFC;
+    min-height: 100vh;
+    padding-bottom: 70px;
+}
+
+/* HEADER */
+.header {
+    background: #151B2E;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #232B44;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+.logo { font-size: 19px; font-weight: 800; color: #F59E0B; display: flex; align-items: center; gap: 6px; }
+.logo span { display: block; font-size: 9px; color: #94A3B8; font-weight: 600; letter-spacing: 0.5px; }
+.header-right { display: flex; align-items: center; gap: 14px; }
+.bell-wrap { position: relative; cursor: pointer; font-size: 20px; }
+.bell-dot {
+    position: absolute; top: -2px; right: -2px;
+    width: 8px; height: 8px; background: #EF4444; border-radius: 50%;
+    border: 1.5px solid #151B2E;
+}
+.profile { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.profile img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #F59E0B; }
+
+/* NOTICE BOARD */
+.notice {
+    background: #241C0C;
+    border-left: 3px solid #F59E0B;
+    color: #FDE68A;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.notice .hi { display: block; }
+.notice .en { display: block; font-weight: 500; font-size: 11px; margin-top: 3px; opacity: 0.85; }
+
+/* WELCOME BANNER */
+.welcome-banner {
+    margin: 14px;
+    padding: 20px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #2A1F4D, #1A1230);
+    border: 1px solid #3D2E6B;
+    position: relative;
+    overflow: hidden;
+}
+.welcome-banner h2 { font-size: 18px; font-weight: 700; }
+.welcome-banner .name { color: #F59E0B; }
+.welcome-banner p { font-size: 12px; color: #C4B5FD; margin-top: 6px; max-width: 75%; }
+.welcome-banner .vip-tag {
+    display: inline-block; margin-top: 4px;
+    background: #F59E0B; color: #1A1230; font-size: 10px; font-weight: 800;
+    padding: 2px 10px; border-radius: 20px;
+}
+.crown-deco { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 46px; opacity: 0.25; }
+
+/* STATS GRID */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 14px 14px; }
+.stat-card {
+    background: #151B2E; border: 1px solid #232B44; border-radius: 12px;
+    padding: 12px 14px;
+}
+.stat-card .stat-icon { font-size: 18px; }
+.stat-card .stat-label { font-size: 11px; color: #94A3B8; margin-top: 6px; }
+.stat-card .stat-value { font-size: 18px; font-weight: 800; margin-top: 2px; }
+.stat-value.green { color: #22C55E; }
+.stat-value.amber { color: #F59E0B; }
+.stat-value.blue { color: #3B82F6; }
+
+/* SECTION TITLE */
+.section-title {
+    display: flex; justify-content: space-between; align-items: center;
+    margin: 20px 14px 10px;
+}
+.section-title h3 { font-size: 15px; font-weight: 700; }
+.section-title .view-all { font-size: 11px; color: #94A3B8; cursor: pointer; }
+
+/* TASK LIST */
+.task-list { margin: 0 14px; }
+.task-row {
+    background: #151B2E; border: 1px solid #232B44; border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.task-row-left { display: flex; align-items: center; gap: 12px; }
+.task-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0;
+}
+.task-icon.purple { background: #2E2158; }
+.task-icon.green { background: #163A26; }
+.task-title { font-size: 13px; font-weight: 700; }
+.task-sub { font-size: 10px; color: #94A3B8; margin-top: 2px; }
+.task-reward { font-size: 12px; font-weight: 800; color: #22C55E; margin-right: 10px; white-space: nowrap; }
+.task-btn {
+    background: #7C3AED; color: white; border: none; padding: 8px 14px;
+    border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;
+    transition: transform 0.1s;
+}
+.task-btn:active { transform: scale(0.93); }
+
+/* VIP SECTION */
+.vip-header { text-align: center; margin: 24px 14px 14px; }
+.vip-header h3 { font-size: 16px; color: #F59E0B; }
+.vip-header p { font-size: 11px; color: #94A3B8; margin-top: 4px; }
+.vip-stack { display: flex; flex-direction: column; gap: 12px; margin: 0 14px; }
+.vip-plan-card {
+    background: #151B2E; border: 1px solid #232B44; border-radius: 14px;
+    padding: 16px; position: relative; overflow: hidden;
+}
+.vip-plan-card.popular { border: 1px solid #F59E0B; background: #1E1806; }
+.popular-tag {
+    position: absolute; top: 0; right: 14px;
+    background: #F59E0B; color: #1E1806; font-size: 9px; font-weight: 800;
+    padding: 3px 10px; border-radius: 0 0 6px 6px;
+}
+.vip-plan-top { display: flex; justify-content: space-between; align-items: center; }
+.vip-plan-name { font-size: 15px; font-weight: 800; }
+.vip-plan-price { font-size: 20px; font-weight: 800; color: #F59E0B; }
+.vip-plan-price span { font-size: 11px; color: #94A3B8; font-weight: 500; }
+.vip-benefits { margin: 10px 0; font-size: 11px; color: #CBD5E1; }
+.vip-benefits div { padding: 2px 0; }
+.vip-buy-btn {
+    width: 100%; padding: 11px; border: none; border-radius: 8px;
+    font-weight: 800; font-size: 13px; cursor: pointer; color: white;
+    background: #3B82F6; transition: transform 0.1s;
+}
+.vip-buy-btn:active { transform: scale(0.97); }
+.vip-plan-card.popular .vip-buy-btn { background: #F59E0B; color: #1E1806; }
+
+/* TRUST FOOTER */
+.trust-footer {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin: 22px 14px 14px;
+}
+.trust-item {
+    background: #151B2E; border: 1px solid #232B44; border-radius: 10px;
+    padding: 10px; text-align: center; cursor: pointer;
+}
+.trust-item .icon { font-size: 18px; }
+.trust-item .title { font-size: 11px; font-weight: 700; margin-top: 4px; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #151B2E; border-top: 1px solid #232B44;
+    display: flex; justify-content: space-around; padding: 8px 0;
+    z-index: 60;
+}
+.nav-item { text-align: center; font-size: 9px; color: #94A3B8; cursor: pointer; }
+.nav-item.active { color: #F59E0B; }
+.nav-item .nav-icon { font-size: 26px; display: block; margin-bottom: 2px; }
+.nav-item { font-size: 10px; }
+
+/* MODAL */
+.modal {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85); z-index: 100; justify-content: center; align-items: center;
+}
+.modal-content {
+    background: #151B2E; padding: 22px; border-radius: 16px; width: 90%; max-width: 350px;
+    max-height: 85vh; overflow-y: auto; border: 1px solid #232B44;
+}
+.modal-content h3 { margin-bottom: 15px; }
+.modal-content input, .modal-content select {
+    width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px;
+    border: 1px solid #232B44; background: #0B0E1A; color: white;
+}
+.modal-content button {
+    width: 100%; padding: 12px; background: #22C55E; color: white; border: none;
+    border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: 700;
+}
+.close-btn { float: right; cursor: pointer; font-size: 22px; color: #94A3B8; }
+#welcomeVideo { width: 100%; border-radius: 10px; margin: 10px 0; }
+
+/* TOAST */
+.toast {
+    position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-100px);
+    background: #163A26; border: 1px solid #22C55E; color: #86EFAC;
+    padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 700;
+    z-index: 200; transition: transform 0.3s ease; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo">👑 EarnWave India<span>MADE IN INDIA</span></div>
+    <div class="header-right">
+        <div class="bell-wrap" onclick="openSupport()">🔔<span class="bell-dot" id="bellDot"></span></div>
+        <div class="profile" onclick="openProfileModal()">
+            <img id="profilePic" src="https://ui-avatars.com/api/?name=User&background=F59E0B&color=1a1230&bold=true" alt="Profile">
+            <input type="file" id="photoInput" style="display:none;" accept="image/*" onchange="handlePhotoUpload(event)">
+        </div>
+    </div>
+</div>
+
+<div class="notice">
+    <span class="hi" id="noticeHi">📢 नई अपडेट के लिए हमारे Telegram चैनल से जुड़ें!</span>
+    <span class="en" id="noticeEn">📢 Join our Telegram channel for latest updates!</span>
+</div>
+
+<div class="welcome-banner">
+    <div class="crown-deco">👑</div>
+    <h2>Welcome back,<br><span class="name" id="welcomeName">User</span></h2>
+    <p>Complete tasks and earn rewards every single day!</p>
+    <div class="vip-tag" id="vipTag" style="display:none;">⭐ VIP Member</div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">📈</div>
+        <div class="stat-label">Today's Earning</div>
+        <div class="stat-value green" id="todayEarning">₹0</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-label">Tasks Completed</div>
+        <div class="stat-value amber" id="tasksCompleted">0</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-label">Wallet Balance</div>
+        <div class="stat-value green" id="walletBalance">₹0</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">👑</div>
+        <div class="stat-label">Your Status</div>
+        <div class="stat-value blue" id="vipStatusText">Normal</div>
+    </div>
+</div>
+
+<div class="section-title">
+    <h3>Quick Actions</h3>
+</div>
+<div class="task-list">
+    <div class="task-row" onclick="window.location.href='task.html'">
+        <div class="task-row-left">
+            <div class="task-icon purple">🎬</div>
+            <div><div class="task-title">Watch Videos</div><div class="task-sub">Earn ₹49 per video</div></div>
+        </div>
+        <button class="task-btn">View</button>
+    </div>
+    <div class="task-row" onclick="window.location.href='withdraw.html'">
+        <div class="task-row-left">
+            <div class="task-icon green">💸</div>
+            <div><div class="task-title">Withdraw Money</div><div class="task-sub">Min ₹399 (₹149 for VIP)</div></div>
+        </div>
+        <button class="task-btn" style="background:#22C55E;">Go</button>
+    </div>
+    <div class="task-row" onclick="openReferral()">
+        <div class="task-row-left">
+            <div class="task-icon purple">👥</div>
+            <div><div class="task-title">Refer & Earn</div><div class="task-sub">Get ₹100 per referral</div></div>
+        </div>
+        <button class="task-btn">Open</button>
+    </div>
+    <div class="task-row" onclick="window.location.href='payment.html'">
+        <div class="task-row-left">
+            <div class="task-icon green">💳</div>
+            <div><div class="task-title">Redeem Code Payment</div><div class="task-sub">Buy game/app redeem codes</div></div>
+        </div>
+        <button class="task-btn" style="background:#3B82F6;">Buy</button>
+    </div>
+</div>
+
+<div class="vip-header">
+    <h3>⭐ Upgrade to VIP</h3>
+    <p>Unlock more tasks & priority withdrawal</p>
+</div>
+<div class="vip-stack">
+    <div class="vip-plan-card">
+        <div class="vip-plan-top">
+            <div class="vip-plan-name">🥉 Bronze</div>
+            <div class="vip-plan-price"><span id="bronzePriceText">₹99</span><span>/week</span></div>
+        </div>
+        <div class="vip-benefits">
+            <div>✔ 4 tasks per day</div>
+            <div>✔ Ad-free experience</div>
+            <div>✔ Min withdrawal ₹149</div>
+        </div>
+        <button class="vip-buy-btn" onclick="openVipModal('Bronze', appSettings.vip_bronze_price)">Buy Now</button>
+    </div>
+    <div class="vip-plan-card popular">
+        <div class="popular-tag">MOST POPULAR</div>
+        <div class="vip-plan-top">
+            <div class="vip-plan-name">🥈 Silver</div>
+            <div class="vip-plan-price"><span id="silverPriceText">₹149</span><span>/week</span></div>
+        </div>
+        <div class="vip-benefits">
+            <div>✔ 4 tasks per day</div>
+            <div>✔ Ad-free experience</div>
+            <div>✔ WhatsApp priority support</div>
+            <div>✔ Min withdrawal ₹149</div>
+        </div>
+        <button class="vip-buy-btn" onclick="openVipModal('Silver', appSettings.vip_silver_price)">Buy Now</button>
+    </div>
+    <div class="vip-plan-card">
+        <div class="vip-plan-top">
+            <div class="vip-plan-name">🥇 Gold</div>
+            <div class="vip-plan-price"><span id="goldPriceText">₹200</span><span>/month</span></div>
+        </div>
+        <div class="vip-benefits">
+            <div>✔ 4 tasks per day</div>
+            <div>✔ Ad-free experience</div>
+            <div>✔ WhatsApp priority support</div>
+            <div>✔ Best value — 30 days</div>
+        </div>
+        <button class="vip-buy-btn" onclick="openVipModal('Gold', appSettings.vip_gold_price)">Buy Now</button>
+    </div>
+</div>
+
+<div class="trust-footer">
+    <div class="trust-item"><div class="icon">🔒</div><div class="title">Secure & Safe</div></div>
+    <div class="trust-item"><div class="icon">⚡</div><div class="title">Instant Payment</div></div>
+    <div class="trust-item" onclick="window.location.href='history.html'"><div class="icon">📜</div><div class="title">My History</div></div>
+    <div class="trust-item" onclick="openSupport()"><div class="icon">🎧</div><div class="title">24/7 Support</div></div>
+</div>
+
+<div style="text-align:center; margin:20px 15px; font-size:11px; color:#64748B;">
+    <span onclick="window.location.href='terms.html'" style="cursor:pointer; text-decoration:underline;">Terms</span> •
+    <span onclick="window.location.href='terms.html'" style="cursor:pointer; text-decoration:underline;">Privacy</span> •
+    <span onclick="window.location.href='terms.html'" style="cursor:pointer; text-decoration:underline;">Refund Policy</span> •
+    <span onclick="window.location.href='terms.html'" style="cursor:pointer; text-decoration:underline;">About Us</span>
+</div>
+
+<div class="bottom-nav">
+    <div class="nav-item active"><span class="nav-icon">🏠</span>Home</div>
+    <div class="nav-item" onclick="window.location.href='task.html'"><span class="nav-icon">📋</span>Tasks</div>
+    <div class="nav-item" onclick="window.scrollTo({top: document.body.scrollHeight, behavior:'smooth'})"><span class="nav-icon">⭐</span>VIP</div>
+    <div class="nav-item" onclick="window.location.href='withdraw.html'"><span class="nav-icon">💰</span>Wallet</div>
+    <div class="nav-item" onclick="openProfileModal()"><span class="nav-icon">👤</span>Profile</div>
+</div>
+
+<div class="modal" id="welcomeModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('welcomeModal')">×</span>
+        <h3>Welcome to EarnWave India!</h3>
+        <p style="font-size:13px; margin:10px 0;">Watch this video to learn how to earn:</p>
+        <iframe id="welcomeVideo" height="180" src="" frameborder="0" allowfullscreen></iframe>
+        <p style="font-size:13px; margin:10px 0;">Join our official Telegram channel:</p>
+        <button id="welcomeTelegramBtn">Join Telegram Channel</button>
+    </div>
+</div>
+
+<div class="modal" id="referralModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('referralModal')">×</span>
+        <h3>Your Referral Code</h3>
+        <input type="text" id="referralCodeDisplay" readonly>
+        <button onclick="copyReferral()">Copy Code</button>
+        <p style="font-size:12px; margin:12px 0; color:#94A3B8; background:#0B0E1A; padding:10px; border-radius:8px;">
+            📢 Per successful referral, you get ₹100 when your friend completes their first task!
+        </p>
+        <div style="display:flex; justify-content:space-between; margin:15px 0; text-align:center;">
+            <div style="flex:1;"><div style="font-size:22px; font-weight:800; color:#22C55E;" id="totalReferrals">0</div><div style="font-size:11px; color:#64748b;">Total Referrals</div></div>
+            <div style="flex:1;"><div style="font-size:22px; font-weight:800; color:#F59E0B;" id="pendingReferrals">0</div><div style="font-size:11px; color:#64748b;">Pending</div></div>
+            <div style="flex:1;"><div style="font-size:22px; font-weight:800; color:#22C55E;" id="claimableAmount">₹0</div><div style="font-size:11px; color:#64748b;">Claimable</div></div>
+        </div>
+        <button onclick="claimReferralEarnings()">Claim Referral Earnings</button>
+    </div>
+</div>
+
+<div class="modal" id="supportModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('supportModal')">×</span>
+        <h3>Support</h3>
+        <div id="normalSupport">
+            <p style="margin:10px 0;">📞 Call us:</p>
+            <button id="supportCallBtn">Call Us</button>
+            <p style="margin:10px 0;">📢 Telegram:</p>
+            <button id="supportTelegramBtn">Join Telegram</button>
+        </div>
+        <div id="vipSupport" style="display:none;">
+            <p style="margin:10px 0;">⭐ VIP WhatsApp Community:</p>
+            <button id="supportWhatsappBtn">Join WhatsApp</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="profileModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('profileModal')">×</span>
+        <h3>My Profile</h3>
+
+        <div style="text-align:center; margin:14px 0;">
+            <img id="profileModalPic" src="https://ui-avatars.com/api/?name=User&background=F59E0B&color=1a1230&bold=true" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:3px solid #F59E0B; cursor:pointer;" onclick="document.getElementById('photoInput').click()">
+            <div style="font-size:11px; color:#94A3B8; margin-top:6px;">Tap photo to change</div>
+        </div>
+
+        <label style="font-size:12px; color:#94A3B8;">User ID</label>
+        <input type="text" id="profileIdDisplay" readonly>
+
+        <label style="font-size:12px; color:#94A3B8;">Your Name</label>
+        <input type="text" id="profileNameInput" placeholder="Enter your name">
+
+        <label style="font-size:12px; color:#94A3B8;">Your UPI ID (for withdrawal)</label>
+        <input type="text" id="profileUpiInput" placeholder="yourname@upi">
+
+        <button onclick="saveProfile()">Save Profile</button>
+    </div>
+</div>
+
+<div class="modal" id="vipModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('vipModal')">×</span>
+        <h3 id="vipModalTitle">VIP Purchase</h3>
+        <p style="font-size:13px; margin:10px 0;">Pay to this UPI ID:</p>
+        <p style="background:#0B0E1A; padding:10px; border-radius:5px; font-weight:bold;" id="vipUpiDisplay">yourupi@bank</p>
+        <button id="vipUpiPayBtn" style="background:#3B82F6;">Pay via UPI App</button>
+        <p style="font-size:12px; margin:10px 0; color:#94A3B8;">After payment, upload screenshot and enter UTR number below:</p>
+        <input type="file" id="vipScreenshot" accept="image/*">
+        <input type="text" id="vipUtr" placeholder="UTR Number">
+        <button onclick="submitVipRequest()">Submit for Verification</button>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://kvdvvohzopqqbwmrmavm.supabase.co";
+const SUPABASE_KEY = "sb_publishable_yYVM-cD-tsMroCRHfspixw_ZLRnv9SN";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let selectedVipPlan = "";
+let selectedVipPrice = 0;
+let appSettings = {
+    upi_id: "yourupi@bank",
+    vip_bronze_price: 99,
+    vip_silver_price: 149,
+    vip_gold_price: 200,
+    notice_hi: "📢 नई अपडेट के लिए हमारे Telegram चैनल से जुड़ें!",
+    notice_en: "📢 Join our Telegram channel for latest updates!",
+    welcome_video_id: "",
+    telegram_link: "https://t.me/EarnWaveIndiaOfficial",
+    whatsapp_link: "https://chat.whatsapp.com/YOUR_LINK",
+    support_phone: "+919999999999"
+};
+
+async function loadAppSettings() {
+    let { data: settings } = await sb.from('app_settings').select('*').eq('id', 1).single();
+    if (settings) {
+        appSettings = settings;
+    }
+    document.getElementById('noticeHi').innerText = "📢 " + appSettings.notice_hi;
+    document.getElementById('noticeEn').innerText = "📢 " + appSettings.notice_en;
+    document.getElementById('bronzePriceText').innerText = "₹" + appSettings.vip_bronze_price;
+    document.getElementById('silverPriceText').innerText = "₹" + appSettings.vip_silver_price;
+    document.getElementById('goldPriceText').innerText = "₹" + appSettings.vip_gold_price;
+    document.getElementById('welcomeVideo').src = "https://www.youtube.com/embed/" + appSettings.welcome_video_id;
+    document.getElementById('welcomeTelegramBtn').onclick = function() { window.open(appSettings.telegram_link, '_blank'); };
+    document.getElementById('supportCallBtn').innerText = "Call: " + appSettings.support_phone;
+    document.getElementById('supportCallBtn').onclick = function() { window.open('tel:' + appSettings.support_phone); };
+    document.getElementById('supportTelegramBtn').onclick = function() { window.open(appSettings.telegram_link, '_blank'); };
+    document.getElementById('supportWhatsappBtn').onclick = function() { window.open(appSettings.whatsapp_link, '_blank'); };
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function animateCount(el, target) {
+    let start = 0;
+    const duration = 700;
+    const startTime = performance.now();
+    function step(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const value = Math.floor(progress * target);
+        el.innerText = "₹" + value;
+        if (progress < 1) requestAnimationFrame(step);
+        else el.innerText = "₹" + target;
+    }
+    requestAnimationFrame(step);
+}
+
+async function init() {
+    await loadAppSettings();
+
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = "index.html"; return; }
+    currentUser = user;
+
+    const shortId = user.id.substring(0,6).toUpperCase();
+    document.getElementById('welcomeName').innerText = "EW" + shortId;
+    document.getElementById('referralCodeDisplay').value = user.id.substring(0,8).toUpperCase();
+
+    let { data: profile } = await sb.from('user_profiles').select('*').eq('user_id', user.id).single();
+    if (profile) {
+        if (profile.name) document.getElementById('welcomeName').innerText = profile.name;
+        if (profile.photo_url) document.getElementById('profilePic').src = profile.photo_url;
+    }
+
+    let { data: wallet } = await sb.from('wallets').select('*').eq('user_id', user.id).single();
+    if (!wallet) {
+        await sb.from('wallets').insert({ user_id: user.id, balance: 0 });
+        animateCount(document.getElementById('walletBalance'), 0);
+    } else {
+        animateCount(document.getElementById('walletBalance'), wallet.balance);
+    }
+
+    let { data: watchLogs } = await sb.from('watch_logs').select('*').eq('user_id', user.id).eq('claimed', true);
+    document.getElementById('tasksCompleted').innerText = watchLogs ? watchLogs.length : 0;
+
+    const today = new Date().toISOString().split('T')[0];
+    const todayLogs = (watchLogs || []).filter(w => w.watched_at && w.watched_at.startsWith(today));
+    document.getElementById('todayEarning').innerText = "₹" + (todayLogs.length * 49);
+
+    let { data: vipStatus } = await sb.from('user_vip_status').select('*').eq('user_id', user.id).single();
+    if (vipStatus && vipStatus.is_vip && new Date(vipStatus.expiry_date) > new Date()) {
+        document.getElementById('vipTag').style.display = 'inline-block';
+        document.getElementById('vipStatusText').innerText = vipStatus.plan || "VIP";
+    }
+
+    if (!sessionStorage.getItem('welcomeShown')) {
+        document.getElementById('welcomeModal').style.display = 'flex';
+        sessionStorage.setItem('welcomeShown', 'true');
+    }
+}
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function openReferral() { document.getElementById('referralModal').style.display = 'flex'; loadReferralStats(); }
+
+function copyReferral() {
+    const input = document.getElementById('referralCodeDisplay');
+    input.select();
+    document.execCommand('copy');
+    showToast('✅ Referral code copied!');
+}
+
+async function openSupport() {
+    document.getElementById('supportModal').style.display = 'flex';
+    let { data: vipStatus } = await sb.from('user_vip_status').select('*').eq('user_id', currentUser.id).single();
+    if (vipStatus && vipStatus.is_vip) {
+        document.getElementById('vipSupport').style.display = 'block';
+    }
+}
+
+async function openProfileModal() {
+    document.getElementById('profileIdDisplay').value = "EW" + currentUser.id.substring(0,6).toUpperCase();
+
+    let { data: profile } = await sb.from('user_profiles').select('*').eq('user_id', currentUser.id).single();
+    if (profile) {
+        document.getElementById('profileNameInput').value = profile.name || '';
+        document.getElementById('profileUpiInput').value = profile.upi_id || '';
+        if (profile.photo_url) {
+            document.getElementById('profileModalPic').src = profile.photo_url;
+            document.getElementById('profilePic').src = profile.photo_url;
+        }
+    }
+
+    document.getElementById('profileModal').style.display = 'flex';
+}
+
+async function saveProfile() {
+    const name = document.getElementById('profileNameInput').value.trim();
+    const upi = document.getElementById('profileUpiInput').value.trim();
+
+    let { data: existing } = await sb.from('user_profiles').select('*').eq('user_id', currentUser.id).single();
+
+    if (existing) {
+        await sb.from('user_profiles').update({ name: name, upi_id: upi }).eq('user_id', currentUser.id);
+    } else {
+        await sb.from('user_profiles').insert({ user_id: currentUser.id, name: name, upi_id: upi });
+    }
+
+    if (name) {
+        document.getElementById('welcomeName').innerText = name;
+    }
+
+    showToast('✅ Profile saved!');
+    closeModal('profileModal');
+}
+
+async function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const fileName = currentUser.id + "_profile_" + Date.now() + "_" + file.name;
+    const { error: uploadError } = await sb.storage.from('vip-screenshots').upload(fileName, file);
+    if (uploadError) {
+        showToast('Photo upload failed: ' + uploadError.message);
+        return;
+    }
+
+    const { data: urlData } = sb.storage.from('vip-screenshots').getPublicUrl(fileName);
+    const photoUrl = urlData.publicUrl;
+
+    document.getElementById('profilePic').src = photoUrl;
+    document.getElementById('profileModalPic').src = photoUrl;
+
+    let { data: existing } = await sb.from('user_profiles').select('*').eq('user_id', currentUser.id).single();
+    if (existing) {
+        await sb.from('user_profiles').update({ photo_url: photoUrl }).eq('user_id', currentUser.id);
+    } else {
+        await sb.from('user_profiles').insert({ user_id: currentUser.id, photo_url: photoUrl });
+    }
+
+    showToast('✅ Photo updated!');
+}
+
+function openVipModal(plan, price) {
+    selectedVipPlan = plan;
+    selectedVipPrice = price;
+    document.getElementById('vipModalTitle').innerText = plan + " VIP - ₹" + price;
+    document.getElementById('vipUpiDisplay').innerText = appSettings.upi_id;
+
+    const upiLink = `upi://pay?pa=${appSettings.upi_id}&pn=EarnWaveIndia&am=${price}&cu=INR&tn=VIP${plan}`;
+    document.getElementById('vipUpiPayBtn').onclick = function() {
+        window.location.href = upiLink;
+    };
+
+    document.getElementById('vipModal').style.display = 'flex';
+}
+
+async function loadReferralStats() {
+    let { data: referrals } = await sb.from('referrals').select('*').eq('referrer_id', currentUser.id);
+    if (referrals) {
+        const total = referrals.length;
+        const claimableTotal = referrals.filter(r => r.task_completed && !r.claimed).reduce((sum, r) => sum + r.amount, 0);
+        const pending = referrals.filter(r => !r.task_completed).length;
+        document.getElementById('totalReferrals').innerText = total;
+        document.getElementById('pendingReferrals').innerText = pending;
+        document.getElementById('claimableAmount').innerText = "₹" + claimableTotal;
+    }
+}
+
+async function claimReferralEarnings() {
+    let { data: referrals } = await sb.from('referrals').select('*').eq('referrer_id', currentUser.id).eq('task_completed', true).eq('claimed', false);
+    if (!referrals || referrals.length === 0) {
+        showToast('No referral earnings to claim right now.');
+        return;
+    }
+    const totalClaim = referrals.reduce((sum, r) => sum + r.amount, 0);
+    let { data: wallet } = await sb.from('wallets').select('*').eq('user_id', currentUser.id).single();
+    const newBalance = (wallet.balance || 0) + totalClaim;
+    await sb.from('wallets').update({ balance: newBalance }).eq('user_id', currentUser.id);
+    const ids = referrals.map(r => r.id);
+    await sb.from('referrals').update({ claimed: true }).in('id', ids);
+    animateCount(document.getElementById('walletBalance'), newBalance);
+    showToast('✅ ₹' + totalClaim + ' claimed successfully!');
+    loadReferralStats();
+}
+
+async function submitVipRequest() {
+    const utr = document.getElementById('vipUtr').value;
+    const fileInput = document.getElementById('vipScreenshot');
+    if (!utr || !fileInput.files[0]) {
+        showToast('Please upload screenshot and enter UTR number');
+        return;
+    }
+    const file = fileInput.files[0];
+    const fileName = currentUser.id + "_" + Date.now() + "_" + file.name;
+    const { error: uploadError } = await sb.storage.from('vip-screenshots').upload(fileName, file);
+    if (uploadError) {
+        showToast('Upload failed: ' + uploadError.message);
+        return;
+    }
+    const { data: urlData } = sb.storage.from('vip-screenshots').getPublicUrl(fileName);
+    const { error } = await sb.from('vip_requests').insert({
+        user_id: currentUser.id,
+        plan_selected: selectedVipPlan + " - ₹" + selectedVipPrice,
+        screenshot_url: urlData.publicUrl,
+        utr_number: utr,
+        status: 'pending'
+    });
+    if (error) {
+        showToast('Error: ' + error.message);
+    } else {
+        const submitBtn = document.querySelector('#vipModal button');
+        submitBtn.innerText = "✓ Submitted Successfully!";
+        submitBtn.style.background = "#22C55E";
+        submitBtn.disabled = true;
+        setTimeout(() => {
+            closeModal('vipModal');
+            submitBtn.innerText = "Submit for Verification";
+            submitBtn.style.background = "";
+            submitBtn.disabled = false;
+        }, 2000);
+    }
+}
+
+init();
+</script>
+</body>
+</html>

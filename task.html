@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasks - EarnWave India</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #0a0e1a; color: white; min-height: 100vh; }
+        .header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .back-btn { font-size: 22px; cursor: pointer; color: #4ade80; }
+        .header h2 { font-size: 18px; }
+
+        .video-card {
+            background: linear-gradient(145deg, #1e293b, #16213a);
+            border: 1px solid #2d3d5c;
+            border-radius: 14px;
+            margin: 15px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .video-card.locked { opacity: 0.6; }
+        .video-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+        .video-meta { font-size: 12px; color: #94a3b8; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .price-tag { color: #4ade80; font-weight: 800; }
+        .vip-tag {
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            color: #1e293b;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 800;
+        }
+        .video-frame { width: 100%; height: 200px; border-radius: 8px; border: none; margin: 10px 0; }
+        .lock-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 150px;
+            background: #0f172a;
+            border-radius: 8px;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        .lock-overlay .icon { font-size: 30px; }
+        .lock-overlay p { font-size: 12px; color: #fbbf24; margin-top: 8px; text-align: center; padding: 0 15px; }
+
+        .claim-btn {
+            width: 100%;
+            padding: 12px;
+            background: #334155;
+            color: #64748b;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: not-allowed;
+        }
+        .claim-btn.enabled {
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            color: white;
+            cursor: pointer;
+        }
+        .claim-btn.done {
+            background: #1e293b;
+            color: #4ade80;
+            cursor: default;
+        }
+        .timer-text { text-align: center; font-size: 12px; color: #94a3b8; margin-top: 6px; }
+        .no-videos { text-align: center; padding: 40px 20px; color: #64748b; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span class="back-btn" onclick="window.location.href='dashboard.html'">←</span>
+        <h2>Available Tasks</h2>
+    </div>
+
+    <div id="videoList"></div>
+
+    <script>
+        const SUPABASE_URL = "https://kvdvvohzopqqbwmrmavm.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_yYVM-cD-tsMroCRHfspixw_ZLRnv9SN";
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let isVip = false;
+
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) { window.location.href = "index.html"; return; }
+            currentUser = user;
+
+            let { data: vipStatus } = await sb.from('user_vip_status').select('*').eq('user_id', user.id).single();
+            if (vipStatus && vipStatus.is_vip && new Date(vipStatus.expiry_date) > new Date()) {
+                isVip = true;
+            }
+
+            loadVideos();
+        }
+
+        async function loadVideos() {
+            let { data: videos } = await sb.from('videos').select('*').eq('status', 'active').order('id');
+            let { data: watchedLogs } = await sb.from('watch_logs').select('*').eq('user_id', currentUser.id);
+
+            const watchedMap = {};
+            if (watchedLogs) watchedLogs.forEach(w => watchedMap[w.video_id] = w);
+
+            const normalVideos = (videos || []).filter(v => v.tier === 'normal').slice(0, 3);
+            const vipVideos = (videos || []).filter(v => v.tier === 'vip').slice(0, 2);
+            const allVideos = [...normalVideos, ...vipVideos];
+
+            const container = document.getElementById('videoList');
+            if (allVideos.length === 0) {
+                container.innerHTML = '<div class="no-videos">No tasks available right now. New tasks are added daily after 12 AM. Check back soon!</div>';
+                return;
+            }
+
+            container.innerHTML = allVideos.map(video => {
+                const watched = watchedMap[video.id];
+                const locked = video.tier === 'vip' && !isVip;
+                const videoId = 'v' + video.id;
+
+                if (locked) {
+                    return `
+                        <div class="video-card locked">
+                            <div class="video-title">${video.title} <span class="vip-tag">VIP</span></div>
+                            <div class="video-meta"><span>${video.duration}</span><span class="price-tag">₹${video.price}</span></div>
+                            <div class="lock-overlay" onclick="alert('This is a VIP-only task. Upgrade to VIP from your dashboard to unlock extra earning videos!')">
+                                <div class="icon">🔒</div>
+                                <p>VIP members only. Tap to learn how to unlock.</p>
+                            </div>
+                        </div>`;
+                }
+
+                if (watched && watched.claimed) {
+                    return `
+                        <div class="video-card">
+                            <div class="video-title">${video.title} ${video.tier === 'vip' ? '<span class="vip-tag">VIP</span>' : ''}</div>
+                            <div class="video-meta"><span>${video.duration}</span><span class="price-tag">₹${video.price}</span></div>
+                            <button class="claim-btn done">✓ Claimed</button>
+                        </div>`;
+                }
+
+                return `
+                    <div class="video-card">
+                        <div class="video-title">${video.title} ${video.tier === 'vip' ? '<span class="vip-tag">VIP</span>' : ''}</div>
+                        <div class="video-meta"><span>${video.duration}</span><span class="price-tag">₹${video.price}</span></div>
+                        <iframe class="video-frame" id="frame-${videoId}" src="https://www.youtube.com/embed/${video.video_url}?enablejsapi=1" allow="autoplay"></iframe>
+                        <button class="claim-btn" id="btn-${videoId}" disabled onclick="claimVideo(${video.id}, ${video.price})">Watch full video to claim ₹${video.price}</button>
+                        <div class="timer-text" id="timer-${videoId}">Watch at least 45 seconds to unlock claim</div>
+                    </div>`;
+            }).join('');
+
+            allVideos.forEach(video => {
+                if (!watchedMap[video.id] && !(video.tier === 'vip' && !isVip)) {
+                    startTimer('v' + video.id, video.price);
+                }
+            });
+        }
+
+        function startTimer(videoId, price) {
+            let seconds = 0;
+            const timerEl = document.getElementById('timer-' + videoId);
+            const btnEl = document.getElementById('btn-' + videoId);
+
+            const interval = setInterval(() => {
+                seconds++;
+                const remaining = 45 - seconds;
+                if (remaining > 0) {
+                    timerEl.innerText = remaining + " seconds remaining to unlock claim";
+                } else {
+                    timerEl.innerText = "Ready to claim!";
+                    btnEl.disabled = false;
+                    btnEl.classList.add('enabled');
+                    btnEl.innerText = "Claim ₹" + price;
+                    clearInterval(interval);
+                }
+            }, 1000);
+        }
+
+        async function claimVideo(videoId, price) {
+            const { error: insertError } = await sb.from('watch_logs').insert({
+                user_id: currentUser.id,
+                video_id: videoId,
+                claimed: true
+            });
+
+            if (insertError) {
+                alert('This video was already claimed.');
+                return;
+            }
+
+            let { data: wallet } = await sb.from('wallets').select('*').eq('user_id', currentUser.id).single();
+            const newBalance = (wallet ? wallet.balance : 0) + price;
+
+            if (!wallet) {
+                await sb.from('wallets').insert({ user_id: currentUser.id, balance: newBalance });
+            } else {
+                await sb.from('wallets').update({ balance: newBalance }).eq('user_id', currentUser.id);
+            }
+
+            let { data: allClaims } = await sb.from('watch_logs').select('id').eq('user_id', currentUser.id).eq('claimed', true);
+            if (allClaims && allClaims.length === 1) {
+                await sb.from('referrals').update({ task_completed: true }).eq('referred_id', currentUser.id).eq('task_completed', false);
+            }
+
+            alert('₹' + price + ' added to your wallet!');
+            loadVideos();
+        }
+
+        init();
+    </script>
+</body>
+</html>

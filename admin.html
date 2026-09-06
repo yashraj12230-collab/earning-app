@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - EarnWave India</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #0f172a; color: white; padding: 20px; max-width: 700px; margin: auto; }
+        h2 { margin-bottom: 15px; }
+        h3 { margin: 25px 0 10px; color: #94a3b8; font-size: 15px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+        input, select { width: 100%; padding: 10px; margin: 6px 0; border-radius: 5px; border: none; box-sizing: border-box; }
+        button { padding: 10px 15px; background: #22c55e; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .full-btn { width: 100%; padding: 12px; margin-top: 10px; }
+        #message { margin-top: 10px; text-align: center; font-weight: bold; }
+
+        .tabs { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .tab-btn { flex: 1; min-width: 100px; padding: 10px; background: #1e293b; border: 1px solid #334155; border-radius: 8px; text-align: center; cursor: pointer; font-size: 12px; }
+        .tab-btn.active { background: #22c55e; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .item-card {
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #334155;
+        }
+        .item-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .item-label { font-size: 12px; color: #94a3b8; }
+        .item-value { font-size: 13px; font-weight: 600; }
+        .action-row { display: flex; gap: 8px; margin-top: 10px; }
+        .approve-btn { background: #22c55e; flex: 1; }
+        .reject-btn { background: #ef4444; flex: 1; }
+        .del-btn { background: #ef4444; padding: 5px 10px; font-size: 11px; }
+        .paid-tag { color: #4ade80; font-weight: bold; font-size: 12px; }
+        .pending-tag { color: #fbbf24; font-weight: bold; font-size: 12px; }
+        .ss-link { color: #38bdf8; font-size: 12px; text-decoration: underline; cursor: pointer; }
+        .empty-text { color: #64748b; font-size: 13px; text-align: center; padding: 20px; }
+        .profit-tag { color: #22c55e; font-size: 11px; font-weight: 700; }
+        .total-box {
+            background: #163a26; border: 1px solid #22c55e; border-radius: 10px;
+            padding: 14px; margin-bottom: 15px; text-align: center;
+        }
+        .total-box .label { font-size: 12px; color: #86efac; }
+        .total-box .value { font-size: 22px; font-weight: 800; color: #4ade80; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <h2>🔧 Admin Panel - EarnWave India</h2>
+
+    <div class="tabs">
+        <div class="tab-btn active" onclick="switchTab('videos')">Videos</div>
+        <div class="tab-btn" onclick="switchTab('withdrawals')">Withdrawals</div>
+        <div class="tab-btn" onclick="switchTab('vip')">VIP Requests</div>
+        <div class="tab-btn" onclick="switchTab('redeem')">Redeem Payments</div>
+        <div class="tab-btn" onclick="switchTab('wallets')">Manage Wallets</div>
+        <div class="tab-btn" onclick="switchTab('settings')">Settings</div>
+    </div>
+
+    <!-- VIDEOS TAB -->
+    <div class="tab-content active" id="videosTab">
+        <h3>Add New Video</h3>
+        <input type="text" id="title" placeholder="Video Title">
+        <input type="text" id="videoUrl" placeholder="YouTube Video ID">
+        <input type="text" id="duration" placeholder="Duration (e.g. 45 sec)">
+        <select id="tier">
+            <option value="normal">Normal (₹49)</option>
+            <option value="vip">VIP (₹69)</option>
+        </select>
+        <input type="number" id="price" placeholder="Price (49 or 69)">
+        <button class="full-btn" onclick="addVideo()">Add Video</button>
+        <div id="message"></div>
+
+        <h3>Current Videos</h3>
+        <div id="videoListAdmin"></div>
+    </div>
+
+    <!-- WITHDRAWALS TAB -->
+    <div class="tab-content" id="withdrawalsTab">
+        <h3>Pending Withdrawal Requests</h3>
+        <div id="pendingWithdrawals"></div>
+
+        <h3>Completed Withdrawals</h3>
+        <div id="paidWithdrawals"></div>
+    </div>
+
+    <!-- VIP REQUESTS TAB -->
+    <div class="tab-content" id="vipTab">
+        <h3>Pending VIP Requests</h3>
+        <div id="pendingVip"></div>
+
+        <h3>Processed VIP Requests</h3>
+        <div id="processedVip"></div>
+    </div>
+
+    <!-- REDEEM PAYMENTS TAB -->
+    <div class="tab-content" id="redeemTab">
+        <div class="total-box">
+            <div class="label">Total Collected (Pending + Completed)</div>
+            <div class="value" id="redeemTotalCollected">₹0</div>
+        </div>
+
+        <h3>Pending Redeem Code Requests</h3>
+        <div id="pendingRedeem"></div>
+
+        <h3>Completed Redeem Code Requests</h3>
+        <div id="completedRedeem"></div>
+    </div>
+
+    <!-- MANAGE WALLETS TAB -->
+    <div class="tab-content" id="walletsTab">
+        <h3>All Users - Wallet Balances</h3>
+        <input type="text" id="walletSearch" placeholder="Search by User ID..." onkeyup="filterWallets()">
+        <div id="allWalletsList"></div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="tab-content" id="settingsTab">
+        <h3>💰 UPI & VIP Pricing</h3>
+        <label style="font-size:12px; color:#94a3b8;">Your UPI ID</label>
+        <input type="text" id="set_upi_id" placeholder="yourupi@bank">
+        <label style="font-size:12px; color:#94a3b8;">Bronze VIP Price</label>
+        <input type="number" id="set_bronze_price" placeholder="99">
+        <label style="font-size:12px; color:#94a3b8;">Silver VIP Price</label>
+        <input type="number" id="set_silver_price" placeholder="149">
+        <label style="font-size:12px; color:#94a3b8;">Gold VIP Price</label>
+        <input type="number" id="set_gold_price" placeholder="200">
+
+        <h3>📢 Notice Board</h3>
+        <label style="font-size:12px; color:#94a3b8;">Notice (Hindi)</label>
+        <input type="text" id="set_notice_hi" placeholder="Hindi notice text">
+        <label style="font-size:12px; color:#94a3b8;">Notice (English)</label>
+        <input type="text" id="set_notice_en" placeholder="English notice text">
+
+        <h3>🎥 Videos & Links</h3>
+        <label style="font-size:12px; color:#94a3b8;">Welcome/How-to-Earn Video (YouTube ID only)</label>
+        <input type="text" id="set_welcome_video" placeholder="e.g. dQw4w9WgXcQ">
+        <label style="font-size:12px; color:#94a3b8;">Withdrawal Guide Video (YouTube ID only)</label>
+        <input type="text" id="set_withdrawal_video" placeholder="e.g. dQw4w9WgXcQ">
+        <label style="font-size:12px; color:#94a3b8;">Telegram Channel Link</label>
+        <input type="text" id="set_telegram_link" placeholder="https://t.me/yourchannel">
+        <label style="font-size:12px; color:#94a3b8;">WhatsApp Community Link (VIP)</label>
+        <input type="text" id="set_whatsapp_link" placeholder="https://chat.whatsapp.com/...">
+        <label style="font-size:12px; color:#94a3b8;">Support Phone Number</label>
+        <input type="text" id="set_support_phone" placeholder="+919999999999">
+
+        <button class="full-btn" onclick="saveSettings()">💾 Save All Settings</button>
+        <div id="settingsMessage" style="margin-top:10px; text-align:center; font-weight:bold;"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://kvdvvohzopqqbwmrmavm.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_yYVM-cD-tsMroCRHfspixw_ZLRnv9SN";
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+
+            if (tab === 'withdrawals') loadWithdrawals();
+            if (tab === 'vip') loadVipRequests();
+            if (tab === 'redeem') loadRedeemRequests();
+            if (tab === 'wallets') loadAllWallets();
+            if (tab === 'settings') loadSettings();
+        }
+
+        // ===== VIDEOS =====
+        async function addVideo() {
+            const title = document.getElementById('title').value;
+            const videoUrl = document.getElementById('videoUrl').value;
+            const duration = document.getElementById('duration').value;
+            const tier = document.getElementById('tier').value;
+            const price = document.getElementById('price').value;
+
+            if (!title || !videoUrl || !duration || !price) {
+                document.getElementById('message').innerText = "Please fill all fields!";
+                return;
+            }
+
+            const { error } = await sb.from('videos').insert({
+                title: title, video_url: videoUrl, duration: duration,
+                price: parseFloat(price), tier: tier, status: 'active'
+            });
+
+            if (error) {
+                document.getElementById('message').innerText = "Error: " + error.message;
+            } else {
+                document.getElementById('message').innerText = "✅ Video added successfully!";
+                document.getElementById('title').value = '';
+                document.getElementById('videoUrl').value = '';
+                document.getElementById('duration').value = '';
+                document.getElementById('price').value = '';
+                loadVideoList();
+            }
+        }
+
+        async function loadVideoList() {
+            let { data: videos } = await sb.from('videos').select('*').order('id', { ascending: false });
+            const container = document.getElementById('videoListAdmin');
+            if (!videos || videos.length === 0) {
+                container.innerHTML = '<div class="empty-text">No videos yet.</div>';
+                return;
+            }
+            container.innerHTML = videos.map(v => `
+                <div class="item-card">
+                    <div class="item-row"><span class="item-value">${v.title} (${v.tier}) - ₹${v.price}</span>
+                    <span class="del-btn" onclick="deleteVideo(${v.id})">Delete</span></div>
+                    <div class="item-label">ID: ${v.video_url} | Status: ${v.status}</div>
+                </div>
+            `).join('');
+        }
+
+        async function deleteVideo(id) {
+            if (!confirm('Delete this video?')) return;
+            await sb.from('videos').delete().eq('id', id);
+            loadVideoList();
+        }
+
+        // ===== WITHDRAWALS =====
+        async function loadWithdrawals() {
+            let { data: all } = await sb.from('withdrawals').select('*').order('requested_at', { ascending: false });
+
+            const pending = (all || []).filter(w => w.status === 'pending');
+            const paid = (all || []).filter(w => w.status === 'paid');
+
+            const pendingContainer = document.getElementById('pendingWithdrawals');
+            if (pending.length === 0) {
+                pendingContainer.innerHTML = '<div class="empty-text">No pending withdrawals.</div>';
+            } else {
+                pendingContainer.innerHTML = pending.map(w => `
+                    <div class="item-card">
+                        <div class="item-row"><span class="item-label">User ID</span><span class="item-value">${w.user_id.substring(0,8)}</span></div>
+                        <div class="item-row"><span class="item-label">Amount</span><span class="item-value">₹${w.amount}</span></div>
+                        <div class="item-row"><span class="item-label">UPI ID</span><span class="item-value">${w.upi_id}</span></div>
+                        <button class="full-btn approve-btn" onclick="markPaid(${w.id})">✓ Mark as Paid</button>
+                    </div>
+                `).join('');
+            }
+
+            const paidContainer = document.getElementById('paidWithdrawals');
+            if (paid.length === 0) {
+                paidContainer.innerHTML = '<div class="empty-text">No completed withdrawals yet.</div>';
+            } else {
+                paidContainer.innerHTML = paid.map(w => `
+                    <div class="item-card">
+                        <div class="item-row"><span class="item-value">₹${w.amount} - ${w.upi_id}</span><span class="paid-tag">✅ Paid</span></div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function markPaid(id) {
+            await sb.from('withdrawals').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', id);
+            loadWithdrawals();
+        }
+
+        // ===== VIP REQUESTS =====
+        async function loadVipRequests() {
+            let { data: all } = await sb.from('vip_requests').select('*').order('requested_at', { ascending: false });
+
+            const pending = (all || []).filter(v => v.status === 'pending');
+            const processed = (all || []).filter(v => v.status !== 'pending');
+
+            const pendingContainer = document.getElementById('pendingVip');
+            if (pending.length === 0) {
+                pendingContainer.innerHTML = '<div class="empty-text">No pending VIP requests.</div>';
+            } else {
+                pendingContainer.innerHTML = pending.map(v => `
+                    <div class="item-card">
+                        <div class="item-row"><span class="item-label">User ID</span><span class="item-value">${v.user_id.substring(0,8)}</span></div>
+                        <div class="item-row"><span class="item-label">Plan</span><span class="item-value">${v.plan_selected}</span></div>
+                        <div class="item-row"><span class="item-label">UTR Number</span><span class="item-value">${v.utr_number}</span></div>
+                        <a class="ss-link" href="${v.screenshot_url}" target="_blank">View Screenshot</a>
+                        <div class="action-row">
+                            <button class="approve-btn" onclick="approveVip(${v.id}, '${v.user_id}', '${v.plan_selected}')">✓ Approve</button>
+                            <button class="reject-btn" onclick="rejectVip(${v.id})">✗ Reject</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            const processedContainer = document.getElementById('processedVip');
+            if (processed.length === 0) {
+                processedContainer.innerHTML = '<div class="empty-text">No processed requests yet.</div>';
+            } else {
+                processedContainer.innerHTML = processed.map(v => `
+                    <div class="item-card">
+                        <div class="item-row"><span class="item-value">${v.plan_selected}</span>
+                        <span class="${v.status === 'approved' ? 'paid-tag' : 'pending-tag'}">${v.status}</span></div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function approveVip(requestId, userId, planText) {
+            let durationDays = 7;
+            if (planText.includes('Gold')) durationDays = 30;
+
+            const expiryDate = new Date();
+            expiryDate.setDate(expiryDate.getDate() + durationDays);
+
+            const { data: existing } = await sb.from('user_vip_status').select('*').eq('user_id', userId).single();
+
+            if (existing) {
+                await sb.from('user_vip_status').update({
+                    is_vip: true, plan: planText, expiry_date: expiryDate.toISOString()
+                }).eq('user_id', userId);
+            } else {
+                await sb.from('user_vip_status').insert({
+                    user_id: userId, is_vip: true, plan: planText, expiry_date: expiryDate.toISOString()
+                });
+            }
+
+            await sb.from('vip_requests').update({ status: 'approved' }).eq('id', requestId);
+            alert('VIP activated for user!');
+            loadVipRequests();
+        }
+
+        async function rejectVip(requestId) {
+            await sb.from('vip_requests').update({ status: 'rejected' }).eq('id', requestId);
+            loadVipRequests();
+        }
+
+        // ===== REDEEM PAYMENTS =====
+        async function loadRedeemRequests() {
+            let { data: all } = await sb.from('redeem_requests').select('*').order('requested_at', { ascending: false });
+
+            const pending = (all || []).filter(r => r.status === 'pending');
+            const completed = (all || []).filter(r => r.status === 'completed');
+
+            const totalCollected = (all || []).reduce((sum, r) => sum + r.paid_amount, 0);
+            document.getElementById('redeemTotalCollected').innerText = "₹" + totalCollected;
+
+            const pendingContainer = document.getElementById('pendingRedeem');
+            if (pending.length === 0) {
+                pendingContainer.innerHTML = '<div class="empty-text">No pending redeem code requests.</div>';
+            } else {
+                pendingContainer.innerHTML = pending.map(r => {
+                    const profit = (r.paid_amount * 0.08).toFixed(1);
+                    return `
+                    <div class="item-card">
+                        <div class="item-row"><span class="item-label">User ID</span><span class="item-value">${r.user_id.substring(0,8)}</span></div>
+                        <div class="item-row"><span class="item-label">Code Value</span><span class="item-value">₹${r.original_amount}</span></div>
+                        <div class="item-row"><span class="item-label">Amount Paid</span><span class="item-value">₹${r.paid_amount}</span></div>
+                        <div class="item-row"><span class="item-label">Your Profit</span><span class="profit-tag">₹${profit}</span></div>
+                        <div class="item-row"><span class="item-label">UTR Number</span><span class="item-value">${r.utr_number}</span></div>
+                        <a class="ss-link" href="${r.screenshot_url}" target="_blank">View Payment Screenshot</a>
+                        <button class="full-btn approve-btn" onclick="markRedeemSent(${r.id})">✓ Code Sent - Mark Complete</button>
+                    </div>
+                `}).join('');
+            }
+
+            const completedContainer = document.getElementById('completedRedeem');
+            if (completed.length === 0) {
+                completedContainer.innerHTML = '<div class="empty-text">No completed requests yet.</div>';
+            } else {
+                completedContainer.innerHTML = completed.map(r => `
+                    <div class="item-card">
+                        <div class="item-row"><span class="item-value">₹${r.original_amount} Code - Paid ₹${r.paid_amount}</span><span class="paid-tag">✅ Sent</span></div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function markRedeemSent(id) {
+            if (!confirm('Mark this code as sent? This will remove the amount from user wallet.')) return;
+
+            const { data: request } = await sb.from('redeem_requests').select('*').eq('id', id).single();
+            if (!request) return;
+
+            const walletDeduction = Math.round(request.paid_amount + (request.paid_amount * 8 / 100));
+
+            let { data: wallet } = await sb.from('wallets').select('*').eq('user_id', request.user_id).single();
+            if (wallet) {
+                const newBalance = Math.max(0, wallet.balance - walletDeduction);
+                await sb.from('wallets').update({ balance: newBalance }).eq('user_id', request.user_id);
+            }
+
+            await sb.from('redeem_requests').update({ status: 'completed' }).eq('id', id);
+            alert('Marked complete and amount removed from wallet!');
+            loadRedeemRequests();
+        }
+
+        // ===== MANAGE WALLETS =====
+        let allWalletsData = [];
+
+        async function loadAllWallets() {
+            let { data: wallets } = await sb.from('wallets').select('*').order('balance', { ascending: false });
+            allWalletsData = wallets || [];
+            renderWalletsList(allWalletsData);
+        }
+
+        function renderWalletsList(list) {
+            const container = document.getElementById('allWalletsList');
+            if (!list || list.length === 0) {
+                container.innerHTML = '<div class="empty-text">No wallets found.</div>';
+                return;
+            }
+            container.innerHTML = list.map(w => `
+                <div class="item-card">
+                    <div class="item-row">
+                        <span class="item-label">User ID</span>
+                        <span class="item-value">${w.user_id.substring(0,8)}</span>
+                    </div>
+                    <div class="item-row">
+                        <span class="item-label">Current Balance</span>
+                        <span class="item-value" style="color:#4ade80;">₹${w.balance}</span>
+                    </div>
+                    <input type="number" id="adjust-${w.user_id}" placeholder="Amount to ADD (use minus for subtract)">
+                    <button class="full-btn approve-btn" onclick="updateWalletBalance('${w.user_id}')">Add to Balance</button>
+                </div>
+            `).join('');
+        }
+
+        function filterWallets() {
+            const query = document.getElementById('walletSearch').value.toLowerCase();
+            const filtered = allWalletsData.filter(w => w.user_id.toLowerCase().includes(query));
+            renderWalletsList(filtered);
+        }
+
+        async function updateWalletBalance(userId) {
+            const input = document.getElementById('adjust-' + userId);
+            const addAmount = parseFloat(input.value);
+            if (isNaN(addAmount)) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            const wallet = allWalletsData.find(w => w.user_id === userId);
+            const currentBalance = wallet ? wallet.balance : 0;
+            const newBalance = Math.max(0, currentBalance + addAmount);
+            await sb.from('wallets').update({ balance: newBalance }).eq('user_id', userId);
+            alert('Wallet updated! New balance: ₹' + newBalance);
+            loadAllWallets();
+        }
+
+        // ===== SETTINGS =====
+        async function loadSettings() {
+            let { data: settings } = await sb.from('app_settings').select('*').eq('id', 1).single();
+            if (!settings) return;
+
+            document.getElementById('set_upi_id').value = settings.upi_id || '';
+            document.getElementById('set_bronze_price').value = settings.vip_bronze_price || '';
+            document.getElementById('set_silver_price').value = settings.vip_silver_price || '';
+            document.getElementById('set_gold_price').value = settings.vip_gold_price || '';
+            document.getElementById('set_notice_hi').value = settings.notice_hi || '';
+            document.getElementById('set_notice_en').value = settings.notice_en || '';
+            document.getElementById('set_welcome_video').value = settings.welcome_video_id || '';
+            document.getElementById('set_withdrawal_video').value = settings.withdrawal_guide_video_id || '';
+            document.getElementById('set_telegram_link').value = settings.telegram_link || '';
+            document.getElementById('set_whatsapp_link').value = settings.whatsapp_link || '';
+            document.getElementById('set_support_phone').value = settings.support_phone || '';
+        }
+
+        async function saveSettings() {
+            const updates = {
+                upi_id: document.getElementById('set_upi_id').value,
+                vip_bronze_price: parseFloat(document.getElementById('set_bronze_price').value) || 99,
+                vip_silver_price: parseFloat(document.getElementById('set_silver_price').value) || 149,
+                vip_gold_price: parseFloat(document.getElementById('set_gold_price').value) || 200,
+                notice_hi: document.getElementById('set_notice_hi').value,
+                notice_en: document.getElementById('set_notice_en').value,
+                welcome_video_id: document.getElementById('set_welcome_video').value,
+                withdrawal_guide_video_id: document.getElementById('set_withdrawal_video').value,
+                telegram_link: document.getElementById('set_telegram_link').value,
+                whatsapp_link: document.getElementById('set_whatsapp_link').value,
+                support_phone: document.getElementById('set_support_phone').value
+            };
+
+            const { error } = await sb.from('app_settings').update(updates).eq('id', 1);
+            const msgBox = document.getElementById('settingsMessage');
+            if (error) {
+                msgBox.style.color = '#ef4444';
+                msgBox.innerText = 'Error: ' + error.message;
+            } else {
+                msgBox.style.color = '#4ade80';
+                msgBox.innerText = '✅ Settings saved! Changes will reflect on the website.';
+            }
+        }
+
+        loadVideoList();
+    </script>
+</body>
+</html>

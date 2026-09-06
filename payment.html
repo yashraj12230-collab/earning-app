@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment - EarnWave India</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0B0E1A;
+    color: #F8FAFC;
+    min-height: 100vh;
+    padding-bottom: 30px;
+}
+.header {
+    background: #151B2E;
+    padding: 15px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #232B44;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+.back-btn { font-size: 22px; cursor: pointer; color: #F59E0B; }
+.header h2 { font-size: 17px; }
+
+.category-list { margin: 14px; }
+.category-card {
+    background: #151B2E;
+    border: 1px solid #232B44;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+.category-head {
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+.category-head .range-text { font-size: 14px; font-weight: 700; }
+.category-head .arrow { font-size: 12px; color: #94A3B8; transition: transform 0.2s; }
+.category-head.open .arrow { transform: rotate(180deg); }
+
+.category-body {
+    display: none;
+    padding: 0 16px 14px;
+}
+.category-body.open { display: block; }
+
+.value-row {
+    background: #0B0E1A;
+    border: 1px solid #232B44;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.value-info .value-label { font-size: 11px; color: #94A3B8; }
+.value-info .value-amount { font-size: 16px; font-weight: 800; color: #F59E0B; margin-top: 2px; }
+.pay-btn {
+    background: #22C55E;
+    color: white;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+.pay-btn:active { transform: scale(0.93); }
+
+.telegram-section {
+    margin: 20px 14px;
+    background: linear-gradient(135deg, #1A2E4A, #16213A);
+    border: 1px solid #2A4A6B;
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+}
+.telegram-section p { font-size: 13px; color: #94A3B8; margin-bottom: 12px; }
+.telegram-btn {
+    background: #229ED9;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    background: #151B2E;
+    padding: 22px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 350px;
+    max-height: 85vh;
+    overflow-y: auto;
+    border: 1px solid #232B44;
+}
+.modal-content h3 { margin-bottom: 15px; }
+.modal-content input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: 1px solid #232B44;
+    background: #0B0E1A;
+    color: white;
+}
+.modal-content button {
+    width: 100%;
+    padding: 12px;
+    background: #22C55E;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    margin-top: 10px;
+    cursor: pointer;
+    font-weight: 700;
+}
+.close-btn { float: right; cursor: pointer; font-size: 22px; color: #94A3B8; }
+
+.toast {
+    position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-100px);
+    background: #163A26; border: 1px solid #22C55E; color: #86EFAC;
+    padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 700;
+    z-index: 200; transition: transform 0.3s ease; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <span class="back-btn" onclick="window.location.href='dashboard.html'">←</span>
+    <h2>💳 Payment - Redeem Codes</h2>
+</div>
+
+<div class="category-list" id="categoryList"></div>
+
+<div class="telegram-section">
+    <p>📢 Join our official Telegram channel for updates and support</p>
+    <button class="telegram-btn" onclick="window.open('https://t.me/EarnWaveIndiaOfficial','_blank')">Join Telegram Channel</button>
+</div>
+
+<div class="modal" id="paymentModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">×</span>
+        <h3 id="modalTitle">Complete Payment</h3>
+        <p style="font-size:13px; color:#94A3B8; margin-bottom:10px;">Click below to pay via your UPI app:</p>
+        <button id="upiPayBtn" style="background:#3B82F6;">Pay via UPI App</button>
+        <p style="font-size:12px; color:#94A3B8; margin:14px 0 6px;">After payment, upload screenshot and enter UTR number:</p>
+        <input type="file" id="paymentScreenshot" accept="image/*">
+        <input type="text" id="paymentUtr" placeholder="UTR / Transaction Number">
+        <button onclick="submitPaymentRequest()">Submit for Verification</button>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://kvdvvohzopqqbwmrmavm.supabase.co";
+const SUPABASE_KEY = "sb_publishable_yYVM-cD-tsMroCRHfspixw_ZLRnv9SN";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const YOUR_UPI_ID = "yash9913@ptyes";
+const MARKUP_PERCENT = 8;
+
+let currentUser = null;
+let selectedAmount = 0;
+let selectedOriginal = 0;
+
+const categories = [
+    { range: "100 - 200", base: [100, 120, 140, 160, 180] },
+    { range: "200 - 300", base: [200, 220, 240, 260, 280] },
+    { range: "300 - 400", base: [300, 320, 340, 360, 380] },
+    { range: "400 - 500", base: [400, 420, 440, 460, 480] },
+    { range: "500 - 600", base: [500, 520, 540, 560, 580] },
+    { range: "600 - 700", base: [600, 620, 640, 660, 680] },
+    { range: "700 - 800", base: [700, 720, 740, 760, 780] },
+    { range: "800 - 900", base: [800, 820, 840, 860, 880] },
+    { range: "900 - 1000", base: [900, 920, 940, 960, 980] },
+    { range: "1000 - 1999", base: [1200, 1400, 1500, 1700, 1800, 1900, 2000] }
+];
+
+function withMarkup(value) {
+    return Math.round(value + (value * MARKUP_PERCENT / 100));
+}
+
+function renderCategories() {
+    const container = document.getElementById('categoryList');
+    container.innerHTML = categories.map((cat, idx) => `
+        <div class="category-card">
+            <div class="category-head" id="head-${idx}" onclick="toggleCategory(${idx})">
+                <span class="range-text">${cat.range}</span>
+                <span class="arrow">▼</span>
+            </div>
+            <div class="category-body" id="body-${idx}">
+                ${cat.base.map(val => `
+                    <div class="value-row">
+                        <div class="value-info">
+                            <div class="value-label">Redeem Code Value</div>
+                            <div class="value-amount">₹${val}</div>
+                            <div style="font-size:10px; color:#22C55E; margin-top:2px;">Your Profit: ₹${(val * MARKUP_PERCENT / 100).toFixed(1)} (8%)</div>
+                        </div>
+                        <button class="pay-btn" onclick="openPayment(${val}, ${val})">Pay</button>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function toggleCategory(idx) {
+    const head = document.getElementById('head-' + idx);
+    const body = document.getElementById('body-' + idx);
+    const isOpen = body.classList.contains('open');
+
+    document.querySelectorAll('.category-body').forEach(b => b.classList.remove('open'));
+    document.querySelectorAll('.category-head').forEach(h => h.classList.remove('open'));
+
+    if (!isOpen) {
+        body.classList.add('open');
+        head.classList.add('open');
+    }
+}
+
+function openPayment(originalValue, payAmount) {
+    selectedOriginal = originalValue;
+    selectedAmount = payAmount;
+    document.getElementById('modalTitle').innerText = "Pay ₹" + payAmount + " for Redeem Code";
+
+    const upiLink = `upi://pay?pa=${YOUR_UPI_ID}&pn=EarnWaveIndia&am=${payAmount}&cu=INR&tn=RedeemCode${originalValue}`;
+    document.getElementById('upiPayBtn').onclick = function() {
+        window.location.href = upiLink;
+    };
+
+    document.getElementById('paymentModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('paymentModal').style.display = 'none';
+    document.getElementById('paymentUtr').value = '';
+    document.getElementById('paymentScreenshot').value = '';
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+async function submitPaymentRequest() {
+    const utr = document.getElementById('paymentUtr').value.trim();
+    const fileInput = document.getElementById('paymentScreenshot');
+
+    if (!utr || !fileInput.files[0]) {
+        showToast('Please upload screenshot and enter UTR number');
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const fileName = currentUser.id + "_" + Date.now() + "_" + file.name;
+
+    const { error: uploadError } = await sb.storage.from('vip-screenshots').upload(fileName, file);
+    if (uploadError) {
+        showToast('Upload failed: ' + uploadError.message);
+        return;
+    }
+
+    const { data: urlData } = sb.storage.from('vip-screenshots').getPublicUrl(fileName);
+
+    const { error } = await sb.from('redeem_requests').insert({
+        user_id: currentUser.id,
+        original_amount: selectedOriginal,
+        paid_amount: selectedAmount,
+        screenshot_url: urlData.publicUrl,
+        utr_number: utr,
+        status: 'pending'
+    });
+
+    if (error) {
+        showToast('Error: ' + error.message);
+    } else {
+        const walletCredit = withMarkup(selectedAmount);
+        let { data: wallet } = await sb.from('wallets').select('*').eq('user_id', currentUser.id).single();
+        if (!wallet) {
+            await sb.from('wallets').insert({ user_id: currentUser.id, balance: walletCredit });
+        } else {
+            const newBalance = wallet.balance + walletCredit;
+            await sb.from('wallets').update({ balance: newBalance }).eq('user_id', currentUser.id);
+        }
+
+        showToast('✅ Submitted! Amount added to your wallet. Code will be sent soon.');
+        closeModal();
+    }
+}
+
+async function init() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { window.location.href = "index.html"; return; }
+    currentUser = user;
+    renderCategories();
+}
+
+init();
+</script>
+</body>
+</html>

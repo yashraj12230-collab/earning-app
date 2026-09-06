@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw - EarnWave India</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #0a0e1a; color: white; min-height: 100vh; }
+        .header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .back-btn { font-size: 22px; cursor: pointer; color: #4ade80; }
+        .header h2 { font-size: 18px; }
+
+        .wallet-card {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            margin: 15px;
+            padding: 20px;
+            border-radius: 14px;
+            text-align: center;
+        }
+        .wallet-card .label { font-size: 12px; opacity: 0.85; text-transform: uppercase; }
+        .wallet-card .amount { font-size: 32px; font-weight: 800; margin-top: 5px; }
+
+        .form-card {
+            background: linear-gradient(145deg, #1e293b, #16213a);
+            border: 1px solid #2d3d5c;
+            border-radius: 14px;
+            margin: 15px;
+            padding: 18px;
+        }
+        .form-card label { font-size: 13px; color: #94a3b8; display: block; margin-bottom: 6px; }
+        .form-card input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            font-size: 14px;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .notice-box {
+            background: #292112;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 12px;
+            color: #fbbf24;
+            margin-top: 12px;
+        }
+
+        .vip-cta {
+            margin: 15px;
+            padding: 16px;
+            background: linear-gradient(145deg, #292112, #1e293b);
+            border: 1px solid #fbbf24;
+            border-radius: 14px;
+            text-align: center;
+        }
+        .vip-cta p { font-size: 13px; color: #fbbf24; margin-bottom: 10px; font-weight: 600; }
+        .vip-btn {
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            color: #1e293b;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+      .guide-link {
+    margin: 15px;
+    padding: 16px;
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(59,130,246,0.3);
+}
+.guide-link .icon-line {
+    font-size: 22px;
+    margin-bottom: 6px;
+}
+.guide-link .hi-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+}
+.guide-link .en-text {
+    font-size: 12px;
+    color: #dbeafe;
+    margin-top: 3px;
+}
+            
+        }
+
+        .status-list { margin: 15px; }
+        .status-item {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+        .status-pending { color: #fbbf24; }
+        .status-paid { color: #4ade80; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span class="back-btn" onclick="window.location.href='dashboard.html'">←</span>
+        <h2>Withdraw Money</h2>
+    </div>
+
+    <div class="wallet-card">
+        <div class="label">Available Balance</div>
+        <div class="amount" id="walletBalance">₹0</div>
+    </div>
+
+    <div class="form-card">
+        <label>UPI ID</label>
+        <input type="text" id="upiId" placeholder="yourname@upi">
+
+        <label>Amount to Withdraw</label>
+        <input type="number" id="amount" placeholder="Enter amount">
+
+        <button class="submit-btn" onclick="submitWithdrawal()">Submit Withdrawal Request</button>
+
+        <div class="notice-box" id="minNotice">
+            Minimum withdrawal: ₹399 (Normal User)
+        </div>
+    </div>
+
+    <div class="vip-cta">
+        <p>⭐ VIP members can withdraw from just ₹149!</p>
+        <button class="vip-btn" onclick="window.location.href='dashboard.html'">Purchase VIP</button>
+    </div>
+
+    <div class="guide-link" onclick="window.open('https://youtube.com/YOUR_WITHDRAWAL_GUIDE_VIDEO','_blank')">
+    <div class="icon-line">📺</div>
+    <div class="hi-text">वीडियो देखें: पैसे कैसे निकालें</div>
+    <div class="en-text">Watch Video: How to Withdraw Money</div>
+</div>
+    <div class="status-list">
+        <h3 style="font-size:14px; margin-bottom:10px; color:#94a3b8;">Your Withdrawal History</h3>
+        <div id="historyList"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://kvdvvohzopqqbwmrmavm.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_yYVM-cD-tsMroCRHfspixw_ZLRnv9SN";
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let isVip = false;
+        let minWithdraw = 399;
+
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) { window.location.href = "index.html"; return; }
+            currentUser = user;
+
+            let { data: wallet } = await sb.from('wallets').select('*').eq('user_id', user.id).single();
+            document.getElementById('walletBalance').innerText = "₹" + (wallet ? wallet.balance : 0);
+
+            let { data: vipStatus } = await sb.from('user_vip_status').select('*').eq('user_id', user.id).single();
+            if (vipStatus && vipStatus.is_vip && new Date(vipStatus.expiry_date) > new Date()) {
+                isVip = true;
+                minWithdraw = 149;
+                document.getElementById('minNotice').innerText = "Minimum withdrawal: ₹149 (VIP Member)";
+            }
+
+            loadHistory();
+        }
+
+        async function submitWithdrawal() {
+            const upiId = document.getElementById('upiId').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            if (!upiId) {
+                alert('Please enter your UPI ID');
+                return;
+            }
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            if (amount < minWithdraw) {
+                alert('Minimum withdrawal amount is ₹' + minWithdraw);
+                return;
+            }
+            if (amount > 1999) {
+                alert('Maximum withdrawal amount is ₹1999');
+                return;
+            }
+
+            let { data: wallet } = await sb.from('wallets').select('*').eq('user_id', currentUser.id).single();
+            if (!wallet || wallet.balance < amount) {
+                alert('Insufficient wallet balance');
+                return;
+            }
+
+            const { error } = await sb.from('withdrawals').insert({
+                user_id: currentUser.id,
+                amount: amount,
+                upi_id: upiId,
+                status: 'pending'
+            });
+
+            if (error) {
+                alert('Error: ' + error.message);
+                return;
+            }
+
+            const newBalance = wallet.balance - amount;
+            await sb.from('wallets').update({ balance: newBalance }).eq('user_id', currentUser.id);
+
+            alert('Withdrawal request submitted! We will process it soon.');
+            document.getElementById('walletBalance').innerText = "₹" + newBalance;
+            document.getElementById('upiId').value = '';
+            document.getElementById('amount').value = '';
+            loadHistory();
+        }
+
+        async function loadHistory() {
+            let { data: withdrawals } = await sb.from('withdrawals').select('*').eq('user_id', currentUser.id).order('requested_at', { ascending: false });
+            const container = document.getElementById('historyList');
+
+            if (!withdrawals || withdrawals.length === 0) {
+                container.innerHTML = '<p style="color:#64748b; font-size:13px;">No withdrawal requests yet.</p>';
+                return;
+            }
+
+            container.innerHTML = withdrawals.map(w => `
+                <div class="status-item">
+                    <span>₹${w.amount} - ${w.upi_id}</span>
+                    <span class="${w.status === 'paid' ? 'status-paid' : 'status-pending'}">
+                        ${w.status === 'paid' ? '✅ Paid' : '⏳ Pending'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        init();
+    </script>
+</body>
+</html>

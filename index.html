@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login / Signup</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #1e293b; padding: 30px; border-radius: 10px; width: 300px; }
+        input { width: 100%; padding: 10px; margin: 8px 0; border-radius: 5px; border: 2px solid transparent; box-sizing: border-box; }
+        input.error { border: 2px solid #ef4444; background: #fee2e2; }
+        button { width: 100%; padding: 10px; background: #22c55e; color: white; border: none; border-radius: 5px; margin-top: 10px; cursor: pointer; }
+        h2 { text-align: center; }
+        .toggle { text-align: center; margin-top: 10px; cursor: pointer; color: #38bdf8; }
+        #message { text-align: center; margin-top: 10px; color: #ef4444; font-weight: bold; }
+        #success { text-align: center; margin-top: 10px; color: #22c55e; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2 id="formTitle">Login</h2>
+        <div id="signupFields" style="display:none;">
+            <input type="text" id="name" placeholder="Full Name">
+            <input type="text" id="referral" placeholder="Referral Code (optional)">
+        </div>
+        <input type="tel" id="mobile" placeholder="Mobile Number" maxlength="10">
+        <input type="password" id="password" placeholder="Password (min 6 characters)">
+        <button id="submitBtn">Login</button>
+        <div class="toggle" id="toggleText">Don't have an account? Signup</div>
+        <div id="message"></div>
+        <div id="success"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://kvdvvohzopqqbwmrmavm.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_yYVM-cD-tsMroCRHfspixw_ZLRnv9SN";
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let isLogin = true;
+
+        const mobileInput = document.getElementById('mobile');
+        const passwordInput = document.getElementById('password');
+        const nameInput = document.getElementById('name');
+
+        function clearErrors() {
+            mobileInput.classList.remove('error');
+            passwordInput.classList.remove('error');
+            nameInput.classList.remove('error');
+            document.getElementById('message').innerText = "";
+            document.getElementById('success').innerText = "";
+        }
+
+        document.getElementById('toggleText').onclick = function() {
+            isLogin = !isLogin;
+            document.getElementById('formTitle').innerText = isLogin ? "Login" : "Signup";
+            document.getElementById('submitBtn').innerText = isLogin ? "Login" : "Signup";
+            document.getElementById('toggleText').innerText = isLogin ? "Don't have an account? Signup" : "Already have an account? Login";
+            document.getElementById('signupFields').style.display = isLogin ? "none" : "block";
+            clearErrors();
+        };
+
+        document.getElementById('submitBtn').onclick = async function() {
+            clearErrors();
+            const mobile = mobileInput.value.trim();
+            const password = passwordInput.value;
+            const messageBox = document.getElementById('message');
+            const successBox = document.getElementById('success');
+
+            let hasError = false;
+
+            if (!mobile || mobile.length !== 10) {
+                mobileInput.classList.add('error');
+                hasError = true;
+            }
+            if (!password || password.length < 6) {
+                passwordInput.classList.add('error');
+                hasError = true;
+            }
+            if (!isLogin && !nameInput.value.trim()) {
+                nameInput.classList.add('error');
+                hasError = true;
+            }
+
+            if (hasError) {
+                messageBox.innerText = "Please fill all required fields correctly.";
+                return;
+            }
+
+            const fakeEmail = mobile + "@earningapp.com";
+
+            if (isLogin) {
+                const { data, error } = await sb.auth.signInWithPassword({ email: fakeEmail, password: password });
+                if (error) {
+                    mobileInput.classList.add('error');
+                    passwordInput.classList.add('error');
+                    messageBox.innerText = "Incorrect mobile number or password.";
+                } else {
+                    window.location.href = "dashboard.html";
+                }
+            } else {
+                const name = nameInput.value.trim();
+                const referral = document.getElementById('referral').value.trim().toUpperCase();
+
+                const { data, error } = await sb.auth.signUp({
+                    email: fakeEmail,
+                    password: password,
+                    options: { data: { name: name, mobile: mobile, referral_code: referral } }
+                });
+
+                if (error) {
+                    messageBox.innerText = "Signup failed: " + error.message;
+                } else {
+                    const newUserId = data.user.id;
+                    const myCode = newUserId.substring(0, 8).toUpperCase();
+
+                    await sb.from('referral_codes').insert({ code: myCode, user_id: newUserId });
+
+                    if (referral) {
+                        let { data: refCodeRow } = await sb.from('referral_codes').select('*').eq('code', referral).single();
+                        if (refCodeRow && refCodeRow.user_id !== newUserId) {
+                            await sb.from('referrals').insert({
+                                referrer_id: refCodeRow.user_id,
+                                referred_id: newUserId,
+                                task_completed: false,
+                                amount: 100
+                            });
+                        }
+                    }
+
+                    successBox.innerText = "Signup successful! Please login now.";
+                }
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms & Policies - EarnWave India</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #0B0E1A; color: #F8FAFC; min-height: 100vh; padding-bottom: 30px; }
+        .header {
+            background: #151B2E;
+            padding: 15px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #232B44;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .back-btn { font-size: 22px; cursor: pointer; color: #F59E0B; }
+        .header h2 { font-size: 17px; }
+
+        .tabs { display: flex; gap: 8px; margin: 15px; flex-wrap: wrap; }
+        .tab-btn {
+            flex: 1; min-width: 100px; padding: 10px; background: #151B2E; border: 1px solid #232B44;
+            border-radius: 8px; text-align: center; cursor: pointer; font-size: 11px; font-weight: 700;
+        }
+        .tab-btn.active { background: #22C55E; border-color: #22C55E; }
+        .tab-content { display: none; margin: 0 15px; }
+        .tab-content.active { display: block; }
+
+        .policy-card {
+            background: #151B2E; border: 1px solid #232B44; border-radius: 12px;
+            padding: 18px; margin-bottom: 12px;
+        }
+        .policy-card h3 { font-size: 14px; color: #F59E0B; margin-bottom: 8px; }
+        .policy-card p { font-size: 13px; color: #CBD5E1; line-height: 1.6; margin-bottom: 10px; }
+        .policy-card ul { font-size: 13px; color: #CBD5E1; line-height: 1.8; margin-left: 18px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span class="back-btn" onclick="window.location.href='dashboard.html'">←</span>
+        <h2>📄 Terms & Policies</h2>
+    </div>
+
+    <div class="tabs">
+        <div class="tab-btn active" onclick="switchTab('terms')">Terms</div>
+        <div class="tab-btn" onclick="switchTab('privacy')">Privacy</div>
+        <div class="tab-btn" onclick="switchTab('refund')">Refund</div>
+        <div class="tab-btn" onclick="switchTab('about')">About Us</div>
+    </div>
+
+    <div class="tab-content active" id="termsTab">
+        <div class="policy-card">
+            <h3>Terms & Conditions</h3>
+            <p>By using EarnWave India, you agree to the following terms:</p>
+            <ul>
+                <li>Earnings are credited only for genuinely completed tasks (fully watched videos, valid referrals).</li>
+                <li>Attempting to claim rewards fraudulently (bots, multiple fake accounts, etc.) will result in account suspension.</li>
+                <li>Task availability and reward amounts may change based on advertiser/creator budgets.</li>
+                <li>Withdrawal minimums and processing times are as displayed on the Withdraw page.</li>
+                <li>VIP plans provide additional task access and priority support; they do not guarantee a specific income.</li>
+                <li>Referral bonuses are credited only after the referred user completes their first task.</li>
+                <li>We reserve the right to modify these terms at any time. Continued use of the platform means acceptance of updated terms.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="tab-content" id="privacyTab">
+        <div class="policy-card">
+            <h3>Privacy Policy</h3>
+            <p>We respect your privacy. Here's what we collect and why:</p>
+            <ul>
+                <li>Mobile number and password — used for account login and identification.</li>
+                <li>Name and profile photo (optional) — used to personalize your dashboard.</li>
+                <li>UPI ID — used only to process your withdrawal payments.</li>
+                <li>Payment screenshots — used only to verify VIP/redeem code payments manually.</li>
+            </ul>
+            <p>We do not sell or share your personal data with third parties. Your data is stored securely and used only for platform functionality.</p>
+        </div>
+    </div>
+
+    <div class="tab-content" id="refundTab">
+        <div class="policy-card">
+            <h3>Refund Policy</h3>
+            <p>Please read carefully before making any payment:</p>
+            <ul>
+                <li>VIP plan purchases are non-refundable once activated.</li>
+                <li>Redeem code payments are non-refundable once the code has been delivered.</li>
+                <li>If a payment is made but no service is received within 24 hours, please contact support with your UTR number for resolution.</li>
+                <li>Wallet earnings from tasks and referrals cannot be converted back to cash except through the standard withdrawal process.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="tab-content" id="aboutTab">
+        <div class="policy-card">
+            <h3>About EarnWave India</h3>
+            <p>EarnWave India is a task-based earning platform where users can watch promotional videos, refer friends, and earn real rewards. We work with content creators and advertisers to bring genuine paid tasks to our users.</p>
+            <p>🇮🇳 Proudly made in India.</p>
+            <p>For any questions, reach out to us via the Support section on your dashboard.</p>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

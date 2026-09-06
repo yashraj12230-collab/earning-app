@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History - EarnWave India</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #0B0E1A; color: #F8FAFC; min-height: 100vh; padding-bottom: 30px; }
+        .header {
+            background: #151B2E;
+            padding: 15px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #232B44;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .back-btn { font-size: 22px; cursor: pointer; color: #F59E0B; }
+        .header h2 { font-size: 17px; }
+
+        .tabs { display: flex; gap: 8px; margin: 15px; }
+        .tab-btn {
+            flex: 1; padding: 10px; background: #151B2E; border: 1px solid #232B44;
+            border-radius: 8px; text-align: center; cursor: pointer; font-size: 12px; font-weight: 700;
+        }
+        .tab-btn.active { background: #22C55E; border-color: #22C55E; }
+        .tab-content { display: none; margin: 0 15px; }
+        .tab-content.active { display: block; }
+
+        .history-item {
+            background: #151B2E; border: 1px solid #232B44; border-radius: 12px;
+            padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .history-left .title { font-size: 13px; font-weight: 700; }
+        .history-left .date { font-size: 11px; color: #94A3B8; margin-top: 3px; }
+        .history-amount { font-size: 15px; font-weight: 800; color: #22C55E; }
+        .history-amount.negative { color: #EF4444; }
+        .status-tag { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 700; margin-top: 4px; display: inline-block; }
+        .status-pending { background: #292112; color: #F59E0B; }
+        .status-paid { background: #163A26; color: #4ADE80; }
+
+        .empty-text { text-align: center; padding: 40px 20px; color: #64748B; font-size: 13px; }
+        .summary-card {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            margin: 15px; padding: 18px; border-radius: 14px; text-align: center;
+        }
+        .summary-card .label { font-size: 12px; opacity: 0.9; }
+        .summary-card .value { font-size: 26px; font-weight: 800; margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span class="back-btn" onclick="window.location.href='dashboard.html'">←</span>
+        <h2>📜 My History</h2>
+    </div>
+
+    <div class="summary-card">
+        <div class="label">Total Lifetime Earnings</div>
+        <div class="value" id="totalLifetime">₹0</div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab-btn active" onclick="switchTab('tasks')">Tasks</div>
+        <div class="tab-btn" onclick="switchTab('referrals')">Referrals</div>
+        <div class="tab-btn" onclick="switchTab('withdrawals')">Withdrawals</div>
+    </div>
+
+    <div class="tab-content active" id="tasksTab">
+        <div id="taskHistoryList"></div>
+    </div>
+
+    <div class="tab-content" id="referralsTab">
+        <div id="referralHistoryList"></div>
+    </div>
+
+    <div class="tab-content" id="withdrawalsTab">
+        <div id="withdrawalHistoryList"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = "https://kvdvvohzopqqbwmrmavm.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_yYVM-cD-tsMroCRHfspixw_ZLRnv9SN";
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) + ' • ' +
+                   d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function loadTaskHistory() {
+            let { data: logs } = await sb.from('watch_logs').select('*, videos(title, price)').eq('user_id', currentUser.id).eq('claimed', true).order('watched_at', { ascending: false });
+            const container = document.getElementById('taskHistoryList');
+
+            if (!logs || logs.length === 0) {
+                container.innerHTML = '<div class="empty-text">No tasks completed yet. Start watching videos to earn!</div>';
+                return;
+            }
+
+            container.innerHTML = logs.map(log => `
+                <div class="history-item">
+                    <div class="history-left">
+                        <div class="title">${log.videos ? log.videos.title : 'Video Task'}</div>
+                        <div class="date">${formatDate(log.watched_at)}</div>
+                    </div>
+                    <div class="history-amount">+₹${log.videos ? log.videos.price : ''}</div>
+                </div>
+            `).join('');
+        }
+
+        async function loadReferralHistory() {
+            let { data: refs } = await sb.from('referrals').select('*').eq('referrer_id', currentUser.id).order('created_at', { ascending: false });
+            const container = document.getElementById('referralHistoryList');
+
+            if (!refs || refs.length === 0) {
+                container.innerHTML = '<div class="empty-text">No referrals yet. Share your code to start earning!</div>';
+                return;
+            }
+
+            container.innerHTML = refs.map(ref => `
+                <div class="history-item">
+                    <div class="history-left">
+                        <div class="title">Referral Bonus</div>
+                        <div class="date">${formatDate(ref.created_at)}</div>
+                        <span class="status-tag ${ref.task_completed ? 'status-paid' : 'status-pending'}">
+                            ${ref.task_completed ? (ref.claimed ? '✅ Claimed' : '✅ Task Done - Claim Now') : '⏳ Waiting for friend to complete task'}
+                        </span>
+                    </div>
+                    <div class="history-amount">+₹${ref.amount}</div>
+                </div>
+            `).join('');
+        }
+
+        async function loadWithdrawalHistory() {
+            let { data: withdrawals } = await sb.from('withdrawals').select('*').eq('user_id', currentUser.id).order('requested_at', { ascending: false });
+            const container = document.getElementById('withdrawalHistoryList');
+
+            if (!withdrawals || withdrawals.length === 0) {
+                container.innerHTML = '<div class="empty-text">No withdrawal requests yet.</div>';
+                return;
+            }
+
+            container.innerHTML = withdrawals.map(w => `
+                <div class="history-item">
+                    <div class="history-left">
+                        <div class="title">${w.upi_id}</div>
+                        <div class="date">${formatDate(w.requested_at)}</div>
+                        <span class="status-tag ${w.status === 'paid' ? 'status-paid' : 'status-pending'}">
+                            ${w.status === 'paid' ? '✅ Paid' : '⏳ Pending'}
+                        </span>
+                    </div>
+                    <div class="history-amount negative">-₹${w.amount}</div>
+                </div>
+            `).join('');
+        }
+
+        async function loadSummary() {
+            let { data: wallet } = await sb.from('wallets').select('*').eq('user_id', currentUser.id).single();
+            let { data: withdrawals } = await sb.from('withdrawals').select('*').eq('user_id', currentUser.id).eq('status', 'paid');
+
+            const currentBalance = wallet ? wallet.balance : 0;
+            const totalWithdrawn = (withdrawals || []).reduce((sum, w) => sum + w.amount, 0);
+            const lifetime = currentBalance + totalWithdrawn;
+
+            document.getElementById('totalLifetime').innerText = "₹" + lifetime;
+        }
+
+        async function init() {
+            const { data: { user } } = await sb.auth.getUser();
+            if (!user) { window.location.href = "index.html"; return; }
+            currentUser = user;
+
+            loadSummary();
+            loadTaskHistory();
+            loadReferralHistory();
+            loadWithdrawalHistory();
+        }
+
+        init();
+    </script>
+</body>
+</html>

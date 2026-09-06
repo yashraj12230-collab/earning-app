@@ -93,6 +93,34 @@ body {
 .section-title .view-all { font-size: 11px; color: #94A3B8; cursor: pointer; }
 
 /* TASK LIST */
+.hero-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px; }
+.hero-card {
+    border-radius: 16px; padding: 20px 14px; text-align: center; cursor: pointer;
+    transition: transform 0.15s; box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+.hero-card:active { transform: scale(0.96); }
+.hero-card.task-hero { background: linear-gradient(145deg, #7C3AED, #5B21B6); }
+.hero-card.payment-hero { background: linear-gradient(145deg, #2563EB, #1D4ED8); }
+.hero-card .hero-icon { font-size: 32px; margin-bottom: 8px; }
+.hero-card .hero-title { font-size: 15px; font-weight: 800; color: white; }
+.hero-card .hero-sub { font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 4px; }
+
+.how-it-works { margin: 20px 15px; }
+.how-it-works h3 { font-size: 14px; color: #94A3B8; margin-bottom: 10px; text-align: center; }
+.hiw-steps { display: flex; justify-content: space-between; gap: 8px; }
+.hiw-step { flex: 1; text-align: center; background: #151B2E; border: 1px solid #232B44; border-radius: 12px; padding: 12px 6px; }
+.hiw-step .hiw-icon { font-size: 20px; }
+.hiw-step .hiw-text { font-size: 10px; color: #CBD5E1; margin-top: 6px; font-weight: 600; }
+
+.secondary-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px; }
+.secondary-btn {
+    background: #151B2E; border: 1px solid #232B44; border-radius: 12px;
+    padding: 14px 8px; text-align: center; cursor: pointer;
+}
+.secondary-btn .icon { font-size: 20px; }
+.secondary-btn .label { font-size: 12px; margin-top: 6px; font-weight: 700; color: #CBD5E1; }
+.secondary-btn .sub { font-size: 10px; color: #64748B; margin-top: 2px; }
+
 .task-list { margin: 0 14px; }
 .task-row {
     background: #151B2E; border: 1px solid #232B44; border-radius: 12px;
@@ -248,37 +276,38 @@ body {
     </div>
 </div>
 
-<div class="section-title">
-    <h3>Quick Actions</h3>
+<div class="hero-cards">
+    <div class="hero-card task-hero" onclick="window.location.href='task.html'">
+        <div class="hero-icon">🎬</div>
+        <div class="hero-title">Task</div>
+        <div class="hero-sub">Watch videos, earn ₹49 each</div>
+    </div>
+    <div class="hero-card payment-hero" onclick="window.location.href='payment.html'">
+        <div class="hero-icon">💳</div>
+        <div class="hero-title">Payment</div>
+        <div class="hero-sub">Buy game/app redeem codes</div>
+    </div>
 </div>
-<div class="task-list">
-    <div class="task-row" onclick="window.location.href='task.html'">
-        <div class="task-row-left">
-            <div class="task-icon purple">🎬</div>
-            <div><div class="task-title">Watch Videos</div><div class="task-sub">Earn ₹49 per video</div></div>
-        </div>
-        <button class="task-btn">View</button>
+
+<div class="how-it-works">
+    <h3>How EarnWave India Works</h3>
+    <div class="hiw-steps">
+        <div class="hiw-step"><div class="hiw-icon">▶️</div><div class="hiw-text">Watch Task</div></div>
+        <div class="hiw-step"><div class="hiw-icon">💰</div><div class="hiw-text">Earn Money</div></div>
+        <div class="hiw-step"><div class="hiw-icon">🏦</div><div class="hiw-text">Withdraw to UPI</div></div>
     </div>
-    <div class="task-row" onclick="window.location.href='withdraw.html'">
-        <div class="task-row-left">
-            <div class="task-icon green">💸</div>
-            <div><div class="task-title">Withdraw Money</div><div class="task-sub">Min ₹399 (₹149 for VIP)</div></div>
-        </div>
-        <button class="task-btn" style="background:#22C55E;">Go</button>
+</div>
+
+<div class="secondary-actions">
+    <div class="secondary-btn" onclick="window.location.href='withdraw.html'">
+        <div class="icon">💸</div>
+        <div class="label">Withdraw</div>
+        <div class="sub">Min ₹399 / ₹149 VIP</div>
     </div>
-    <div class="task-row" onclick="openReferral()">
-        <div class="task-row-left">
-            <div class="task-icon purple">👥</div>
-            <div><div class="task-title">Refer & Earn</div><div class="task-sub">Get ₹100 per referral</div></div>
-        </div>
-        <button class="task-btn">Open</button>
-    </div>
-    <div class="task-row" onclick="window.location.href='payment.html'">
-        <div class="task-row-left">
-            <div class="task-icon green">💳</div>
-            <div><div class="task-title">Redeem Code Payment</div><div class="task-sub">Buy game/app redeem codes</div></div>
-        </div>
-        <button class="task-btn" style="background:#3B82F6;">Buy</button>
+    <div class="secondary-btn" onclick="openReferral()">
+        <div class="icon">👥</div>
+        <div class="label">Refer & Earn</div>
+        <div class="sub">Get ₹100 per referral</div>
     </div>
 </div>
 

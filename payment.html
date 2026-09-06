@@ -154,7 +154,7 @@ body {
 
 <div class="header">
     <span class="back-btn" onclick="window.location.href='dashboard.html'">←</span>
-    <h2>💳 Payment - Redeem Codes</h2>
+    <h2>💳 Payment</h2>
 </div>
 
 <div class="category-list" id="categoryList"></div>
@@ -184,7 +184,7 @@ const SUPABASE_URL = "https://kvdvvohzopqqbwmrmavm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_yYVM-cD-tsMroCRHfspixw_ZLRnv9SN";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const YOUR_UPI_ID = "yash9913@ptyes";
+const YOUR_UPI_ID = "yourupi@bank";
 const MARKUP_PERCENT = 8;
 
 let currentUser = null;
@@ -201,7 +201,10 @@ const categories = [
     { range: "700 - 800", base: [700, 720, 740, 760, 780] },
     { range: "800 - 900", base: [800, 820, 840, 860, 880] },
     { range: "900 - 1000", base: [900, 920, 940, 960, 980] },
-    { range: "1000 - 1999", base: [1200, 1400, 1500, 1700, 1800, 1900, 2000] }
+    { range: "1000 - 1999", base: [1200, 1400, 1500, 1700, 1800, 1900, 2000] },
+    { range: "2000 - 3000", base: [2200, 2400, 2500, 2700, 2800, 3000] },
+    { range: "3000 - 4000", base: [3200, 3400, 3500, 3700, 3800, 4000] },
+    { range: "4000 - 5000", base: [4200, 4400, 4500, 4700, 4800, 5000] }
 ];
 
 function withMarkup(value) {
@@ -220,7 +223,7 @@ function renderCategories() {
                 ${cat.base.map(val => `
                     <div class="value-row">
                         <div class="value-info">
-                            <div class="value-label">Redeem Code Value</div>
+                            <div class="value-label">Code Value</div>
                             <div class="value-amount">₹${val}</div>
                             <div style="font-size:10px; color:#22C55E; margin-top:2px;">Your Profit: ₹${(val * MARKUP_PERCENT / 100).toFixed(1)} (8%)</div>
                         </div>
@@ -249,7 +252,7 @@ function toggleCategory(idx) {
 function openPayment(originalValue, payAmount) {
     selectedOriginal = originalValue;
     selectedAmount = payAmount;
-    document.getElementById('modalTitle').innerText = "Pay ₹" + payAmount + " for Redeem Code";
+    document.getElementById('modalTitle').innerText = "Pay ₹" + payAmount;
 
     const upiLink = `upi://pay?pa=${YOUR_UPI_ID}&pn=EarnWaveIndia&am=${payAmount}&cu=INR&tn=RedeemCode${originalValue}`;
     document.getElementById('upiPayBtn').onclick = function() {

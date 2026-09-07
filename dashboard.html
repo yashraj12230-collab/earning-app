@@ -531,7 +531,7 @@ async function init() {
     if (!user) { window.location.href = "index.html"; return; }
     currentUser = user;
 
-    const shortId = user.id.substring(0,6).toUpperCase();
+    const shortId = user.id.substring(0,8).toUpperCase();
     document.getElementById('welcomeName').innerText = "EW" + shortId;
     document.getElementById('referralCodeDisplay').value = user.id.substring(0,8).toUpperCase();
 
@@ -587,7 +587,7 @@ async function openSupport() {
 }
 
 async function openProfileModal() {
-    document.getElementById('profileIdDisplay').value = "EW" + currentUser.id.substring(0,6).toUpperCase();
+    document.getElementById('profileIdDisplay').value = "EW" + currentUser.id.substring(0,8).toUpperCase();
 
     let { data: profile } = await sb.from('user_profiles').select('*').eq('user_id', currentUser.id).single();
     if (profile) {

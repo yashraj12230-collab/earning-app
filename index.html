@@ -114,6 +114,7 @@
                     const myCode = newUserId.substring(0, 8).toUpperCase();
 
                     await sb.from('referral_codes').insert({ code: myCode, user_id: newUserId });
+await sb.from('user_profiles').insert({ user_id: newUserId, name: name });
 
                     if (referral) {
                         let { data: refCodeRow } = await sb.from('referral_codes').select('*').eq('code', referral).single();

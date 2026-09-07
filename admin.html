@@ -413,7 +413,11 @@
 
         async function loadAllWallets() {
             let { data: wallets } = await sb.from('wallets').select('*').order('balance', { ascending: false });
-            allWalletsData = wallets || [];
+            let { data: profiles } = await sb.from('user_profiles').select('*');
+            const profileMap = {};
+            (profiles || []).forEach(p => profileMap[p.user_id] = p.name);
+
+            allWalletsData = (wallets || []).map(w => ({ ...w, name: profileMap[w.user_id] || 'No name set' }));
             renderWalletsList(allWalletsData);
         }
 
@@ -425,6 +429,10 @@
             }
             container.innerHTML = list.map(w => `
                 <div class="item-card">
+                    <div class="item-row">
+                        <span class="item-label">User Name</span>
+                        <span class="item-value">${w.name}</span>
+                    </div>
                     <div class="item-row">
                         <span class="item-label">User ID</span>
                         <span class="item-value">${w.user_id.substring(0,8)}</span>
@@ -440,8 +448,12 @@
         }
 
         function filterWallets() {
-            const query = document.getElementById('walletSearch').value.toLowerCase();
-            const filtered = allWalletsData.filter(w => w.user_id.toLowerCase().includes(query));
+            const query = document.getElementById('walletSearch').value.toLowerCase().trim();
+            if (!query) {
+                renderWalletsList(allWalletsData);
+                return;
+            }
+            const filtered = allWalletsData.filter(w => w.user_id.toLowerCase().includes(query) || w.name.toLowerCase().includes(query));
             renderWalletsList(filtered);
         }
 

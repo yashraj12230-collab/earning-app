@@ -36,7 +36,24 @@
             margin: 15px;
             padding: 18px;
         }
-        .form-card label { font-size: 13px; color: #94a3b8; display: block; margin-bottom: 6px; }
+        .form-card label { font-size: 13px; color: #94a3b8; display: block; margin-bottom: 10px; }
+
+        .upi-apps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .upi-app-btn {
+            background: #0f172a; border: 2px solid #334155; border-radius: 10px;
+            padding: 14px 8px; text-align: center; cursor: pointer; transition: border-color 0.15s;
+        }
+        .upi-app-btn.selected { border-color: #22c55e; background: #163a26; }
+        .upi-app-icon {
+            width: 36px; height: 36px; border-radius: 8px; margin: 0 auto 6px;
+            display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: white;
+        }
+        .icon-phonepe { background: #5f259f; }
+        .icon-gpay { background: #4285f4; }
+        .icon-paytm { background: #00baf2; }
+        .icon-navi { background: #ff6b35; }
+        .upi-app-btn .app-name { font-size: 11px; font-weight: 700; color: #cbd5e1; }
+
         .form-card input {
             width: 100%;
             padding: 12px;
@@ -88,31 +105,18 @@
             font-size: 13px;
         }
 
-      .guide-link {
-    margin: 15px;
-    padding: 16px;
-    background: linear-gradient(90deg, #3b82f6, #2563eb);
-    border-radius: 12px;
-    text-align: center;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(59,130,246,0.3);
-}
-.guide-link .icon-line {
-    font-size: 22px;
-    margin-bottom: 6px;
-}
-.guide-link .hi-text {
-    font-size: 15px;
-    font-weight: 700;
-    color: white;
-}
-.guide-link .en-text {
-    font-size: 12px;
-    color: #dbeafe;
-    margin-top: 3px;
-}
-            
+        .guide-link {
+            margin: 15px;
+            padding: 16px;
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(59,130,246,0.3);
         }
+        .guide-link .icon-line { font-size: 22px; margin-bottom: 6px; }
+        .guide-link .hi-text { font-size: 15px; font-weight: 700; color: white; }
+        .guide-link .en-text { font-size: 12px; color: #dbeafe; margin-top: 3px; }
 
         .status-list { margin: 15px; }
         .status-item {
@@ -142,8 +146,28 @@
     </div>
 
     <div class="form-card">
-        <label>UPI ID</label>
-        <input type="text" id="upiId" placeholder="yourname@upi">
+        <label>Choose UPI App</label>
+        <div class="upi-apps-grid">
+            <div class="upi-app-btn" id="app-phonepe" onclick="selectApp('PhonePe')">
+                <div class="upi-app-icon icon-phonepe">Pe</div>
+                <div class="app-name">PhonePe</div>
+            </div>
+            <div class="upi-app-btn" id="app-gpay" onclick="selectApp('Google Pay')">
+                <div class="upi-app-icon icon-gpay">G</div>
+                <div class="app-name">Google Pay</div>
+            </div>
+            <div class="upi-app-btn" id="app-paytm" onclick="selectApp('Paytm')">
+                <div class="upi-app-icon icon-paytm">Pt</div>
+                <div class="app-name">Paytm</div>
+            </div>
+            <div class="upi-app-btn" id="app-navi" onclick="selectApp('Navi')">
+                <div class="upi-app-icon icon-navi">N</div>
+                <div class="app-name">Navi</div>
+            </div>
+        </div>
+
+        <label id="upiIdLabel" style="display:none;">Enter Your UPI ID</label>
+        <input type="text" id="upiId" placeholder="Select an app above first" disabled>
 
         <label>Amount to Withdraw</label>
         <input type="number" id="amount" placeholder="Enter amount">
@@ -151,20 +175,21 @@
         <button class="submit-btn" onclick="submitWithdrawal()">Submit Withdrawal Request</button>
 
         <div class="notice-box" id="minNotice">
-            Minimum withdrawal: ₹399 (Normal User)
+            Minimum withdrawal: ₹99 (Normal User)
         </div>
     </div>
 
     <div class="vip-cta">
-        <p>⭐ VIP members can withdraw from just ₹149!</p>
+        <p>⭐ VIP members can withdraw from just ₹49!</p>
         <button class="vip-btn" onclick="window.location.href='dashboard.html'">Purchase VIP</button>
     </div>
 
-    <div class="guide-link" onclick="window.open('https://youtube.com/YOUR_WITHDRAWAL_GUIDE_VIDEO','_blank')">
-    <div class="icon-line">📺</div>
-    <div class="hi-text">वीडियो देखें: पैसे कैसे निकालें</div>
-    <div class="en-text">Watch Video: How to Withdraw Money</div>
-</div>
+    <div class="guide-link" onclick="window.open(guideVideoLink,'_blank')">
+        <div class="icon-line">📺</div>
+        <div class="hi-text">वीडियो देखें: पैसे कैसे निकालें</div>
+        <div class="en-text">Watch Video: How to Withdraw Money</div>
+    </div>
+
     <div class="status-list">
         <h3 style="font-size:14px; margin-bottom:10px; color:#94a3b8;">Your Withdrawal History</h3>
         <div id="historyList"></div>
@@ -177,12 +202,31 @@
 
         let currentUser = null;
         let isVip = false;
-        let minWithdraw = 399;
+        let minWithdraw = 99;
+        let selectedApp = "";
+        let guideVideoLink = "https://youtube.com";
+
+        function selectApp(appName) {
+            selectedApp = appName;
+            document.querySelectorAll('.upi-app-btn').forEach(btn => btn.classList.remove('selected'));
+            const idMap = { 'PhonePe': 'app-phonepe', 'Google Pay': 'app-gpay', 'Paytm': 'app-paytm', 'Navi': 'app-navi' };
+            document.getElementById(idMap[appName]).classList.add('selected');
+
+            const upiInput = document.getElementById('upiId');
+            upiInput.disabled = false;
+            upiInput.placeholder = "Enter your " + appName + " UPI ID";
+            document.getElementById('upiIdLabel').style.display = 'block';
+        }
 
         async function init() {
             const { data: { user } } = await sb.auth.getUser();
             if (!user) { window.location.href = "index.html"; return; }
             currentUser = user;
+
+            let { data: settings } = await sb.from('app_settings').select('*').eq('id', 1).single();
+            if (settings && settings.withdrawal_guide_video_id) {
+                guideVideoLink = "https://www.youtube.com/watch?v=" + settings.withdrawal_guide_video_id;
+            }
 
             let { data: wallet } = await sb.from('wallets').select('*').eq('user_id', user.id).single();
             document.getElementById('walletBalance').innerText = "₹" + (wallet ? wallet.balance : 0);
@@ -190,8 +234,8 @@
             let { data: vipStatus } = await sb.from('user_vip_status').select('*').eq('user_id', user.id).single();
             if (vipStatus && vipStatus.is_vip && new Date(vipStatus.expiry_date) > new Date()) {
                 isVip = true;
-                minWithdraw = 149;
-                document.getElementById('minNotice').innerText = "Minimum withdrawal: ₹149 (VIP Member)";
+                minWithdraw = 49;
+                document.getElementById('minNotice').innerText = "Minimum withdrawal: ₹49 (VIP Member)";
             }
 
             loadHistory();
@@ -201,6 +245,10 @@
             const upiId = document.getElementById('upiId').value.trim();
             const amount = parseFloat(document.getElementById('amount').value);
 
+            if (!selectedApp) {
+                alert('Please select a UPI app');
+                return;
+            }
             if (!upiId) {
                 alert('Please enter your UPI ID');
                 return;
@@ -228,6 +276,7 @@
                 user_id: currentUser.id,
                 amount: amount,
                 upi_id: upiId,
+                upi_app: selectedApp,
                 status: 'pending'
             });
 
@@ -257,7 +306,7 @@
 
             container.innerHTML = withdrawals.map(w => `
                 <div class="status-item">
-                    <span>₹${w.amount} - ${w.upi_id}</span>
+                    <span>₹${w.amount} - ${w.upi_app || ''} - ${w.upi_id}</span>
                     <span class="${w.status === 'paid' ? 'status-paid' : 'status-pending'}">
                         ${w.status === 'paid' ? '✅ Paid' : '⏳ Pending'}
                     </span>

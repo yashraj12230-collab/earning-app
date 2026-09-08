@@ -169,7 +169,16 @@ body {
         <span class="close-btn" onclick="closeModal()">×</span>
         <h3 id="modalTitle">Complete Payment</h3>
         <p style="font-size:13px; color:#94A3B8; margin-bottom:10px;">Click below to pay via your UPI app:</p>
-        <button id="upiPayBtn" style="background:#3B82F6;">Pay via UPI App</button>
+        <button id="upiPayBtn" style="background:#3B82F6;">Pay via UPI App (Go)</button>
+
+        <div style="background:#0B0E1A; border:1px dashed #334155; border-radius:8px; padding:12px; margin-top:14px;">
+            <p style="font-size:11px; color:#94A3B8; margin-bottom:8px;">If the button above doesn't work, copy this UPI ID and pay manually from your own UPI app:</p>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" id="manualUpiDisplay" readonly style="flex:1; margin:0; font-size:13px;">
+                <button type="button" onclick="copyManualUpi()" style="width:auto; margin:0; padding:10px 14px; font-size:12px;">Copy</button>
+            </div>
+        </div>
+
         <p style="font-size:12px; color:#94A3B8; margin:14px 0 6px;">After payment, upload screenshot and enter UTR number:</p>
         <input type="file" id="paymentScreenshot" accept="image/*">
         <input type="text" id="paymentUtr" placeholder="UTR / Transaction Number">
@@ -184,7 +193,7 @@ const SUPABASE_URL = "https://kvdvvohzopqqbwmrmavm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_yYVM-cD-tsMroCRHfspixw_ZLRnv9SN";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const YOUR_UPI_ID = "yash-r25@ptyes";
+const YOUR_UPI_ID = "yourupi@bank";
 const MARKUP_PERCENT = 8;
 
 let currentUser = null;
@@ -253,6 +262,7 @@ function openPayment(originalValue, payAmount) {
     selectedOriginal = originalValue;
     selectedAmount = payAmount;
     document.getElementById('modalTitle').innerText = "Pay ₹" + payAmount;
+    document.getElementById('manualUpiDisplay').value = YOUR_UPI_ID;
 
     const upiLink = `upi://pay?pa=${YOUR_UPI_ID}&pn=EarnWaveIndia&am=${payAmount}&cu=INR&tn=RedeemCode${originalValue}`;
     document.getElementById('upiPayBtn').onclick = function() {
@@ -260,6 +270,13 @@ function openPayment(originalValue, payAmount) {
     };
 
     document.getElementById('paymentModal').style.display = 'flex';
+}
+
+function copyManualUpi() {
+    const input = document.getElementById('manualUpiDisplay');
+    input.select();
+    document.execCommand('copy');
+    showToast('✅ UPI ID copied!');
 }
 
 function closeModal() {

@@ -168,11 +168,11 @@ body {
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">×</span>
         <h3 id="modalTitle">Complete Payment</h3>
-        <p style="font-size:13px; color:#94A3B8; margin-bottom:10px;">Tap below — this will copy our UPI ID and open your UPI app:</p>
-        <button id="upiPayBtn" style="background:#3B82F6;">Copy UPI ID & Open App</button>
+        <p style="font-size:13px; color:#94A3B8; margin-bottom:10px;">Tap below to copy our UPI ID:</p>
+        <button id="upiPayBtn" style="background:#3B82F6;">Copy UPI ID</button>
 
         <div style="background:#0B0E1A; border:1px dashed #334155; border-radius:8px; padding:12px; margin-top:14px;">
-            <p style="font-size:11px; color:#94A3B8; margin-bottom:8px;">Paste this UPI ID in your app, enter the amount yourself, and pay:</p>
+            <p style="font-size:11px; color:#94A3B8; margin-bottom:8px;">Open your own UPI app (PhonePe/GPay/Paytm), paste this UPI ID, enter the amount, and pay:</p>
             <div style="display:flex; gap:8px; align-items:center;">
                 <input type="text" id="manualUpiDisplay" readonly style="flex:1; margin:0; font-size:13px;">
                 <button type="button" onclick="copyManualUpi()" style="width:auto; margin:0; padding:10px 14px; font-size:12px;">Copy</button>
@@ -193,7 +193,7 @@ const SUPABASE_URL = "https://kvdvvohzopqqbwmrmavm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_yYVM-cD-tsMroCRHfspixw_ZLRnv9SN";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const YOUR_UPI_ID = "yash-r25@ptyes";
+const YOUR_UPI_ID = "yourupi@bank";
 const MARKUP_PERCENT = 8;
 
 let currentUser = null;
@@ -268,10 +268,7 @@ function openPayment(originalValue, payAmount) {
         const input = document.getElementById('manualUpiDisplay');
         input.select();
         document.execCommand('copy');
-        showToast('✅ UPI ID copied! Opening your UPI app...');
-        setTimeout(() => {
-            window.location.href = "upi://pay";
-        }, 800);
+        showToast('✅ UPI ID copied! Now open your UPI app and paste it.');
     };
 
     document.getElementById('paymentModal').style.display = 'flex';
